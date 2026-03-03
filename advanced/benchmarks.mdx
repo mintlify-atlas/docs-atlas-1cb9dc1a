@@ -1,0 +1,179 @@
+---
+title: Benchmarks
+description: Performance benchmarks and measurement suite for kimg
+---
+
+## Running Benchmarks
+
+kimg uses [Criterion.rs](https://github.com/bheisler/criterion.rs) for performance benchmarking. The benchmarks cover all performance-sensitive operations in the core engine.
+
+### Run All Benchmarks
+
+<Steps>
+  <Step title="Run the full benchmark suite">
+    ```bash
+    cargo bench -p kimg-core
+    ```
+    
+    This runs all benchmarks and generates HTML reports with timing history in `target/criterion/`.
+  </Step>
+</Steps>
+
+### Run Specific Benchmarks
+
+Run a single benchmark file:
+
+```bash
+cargo bench -p kimg-core --bench transform
+```
+
+Available benchmark files:
+- `blend`
+- `transform`
+- `convolution`
+- `filter`
+- `document`
+- `codec`
+- `sprite`
+- `fill`
+- `shape`
+
+### Smoke Test
+
+Test benchmark compilation without collecting statistics:
+
+```bash
+cargo bench -p kimg-core -- --test
+```
+
+## Benchmark Suite
+
+The benchmarks measure the following operations:
+
+| File | What's measured |
+|------|----------------|
+| `blend` | Porter-Duff source-over and 3 blend modes at 64×64 / 512×512 / 2048×2048 |
+| `transform` | Nearest, bilinear, and Lanczos3 resize; crop; trim; arbitrary rotation |
+| `convolution` | 3×3 and 5×5 kernels; box blur; Gaussian blur |
+| `filter` | HSL pipeline, invert, levels, posterize, gradient map |
+| `document` | Full render pipeline at 1–10 layers, shape-heavy scenes, clipping/masking overhead, and non-destructive transform render costs |
+| `codec` | PNG / JPEG / WebP encode and decode of a 512×512 buffer |
+| `sprite` | Sprite sheet packing, palette extraction, quantization, pixel-art scale |
+| `fill` | Contiguous and non-contiguous bucket fill, plus alpha-aware tolerance matching |
+| `shape` | Standalone shape rasterization cost for rectangle and polygon primitives |
+
+## Benchmark Harness Notes
+
+### Resize Benchmarks
+
+Very expensive resize cases use reduced flat-sampled Criterion groups so `cargo bench -p kimg-core` stays practical while still reporting worst-case medians.
+
+### SIMD Acceleration
+
+RGBA bilinear and Lanczos3 resize paths use `fast_image_resize`, so:
+- Native builds pick up host SIMD (SSE4.1, AVX2, NEON)
+- Browser `Composition.create()` path can load the separate `simd128` WASM artifact
+
+### Codec Realism
+
+Codec benchmarks use a deterministic textured 512×512 image instead of a flat fill, which avoids unrealistically optimistic compression timings.
+
+### Transform Caching
+
+`render/repeated_transformed_layer/512` performs two back-to-back renders of the same transformed document in one iteration to measure transform-cache wins directly.
+
+### Shape Rasterization
+
+Standalone shape benches instantiate a fresh shape per sample so they continue to measure rasterization work instead of the document-level layer cache.
+
+## Performance Numbers
+
+Representative medians from recent local runs on **March 3, 2026**. These are hardware-dependent and should be treated as a baseline example, not a guarantee:
+
+### Rendering Performance
+
+| Operation | Median |
+|------|------:|
+| `render/single_image/512` | `5.29 ms` |
+| `render/10_layers/512` | `8.31 ms` |
+| `render/10_normal_layers/512` | `17.78 ms` |
+| `render/10_layers_with_filter/512` | `14.05 ms` |
+| `render/single_shape/512` | `739.04 µs` |
+| `render/10_shapes/512` | `7.30 ms` |
+| `render/10_shapes_with_filter/512` | `14.79 ms` |
+| `render/group_of_5/512` | `28.08 ms` |
+| `render/clipped_layer_stack/512` | `18.40 ms` |
+| `render/masked_layer_stack/512` | `10.59 ms` |
+| `render/transformed_image/512` | `774.35 µs` |
+| `render/transformed_paint/512` | `889.75 µs` |
+| `render/transformed_shape/512` | `861.31 µs` |
+| `render/10_layers_with_transforms/512` | `7.98 ms` |
+| `render/repeated_transformed_layer/512` | `1.56 ms` |
+
+### Operations Performance
+
+| Operation | Median |
+|------|------:|
+| `serialize_deserialize/10_layers` | `762.54 µs` |
+| `apply_hsl_filter/512` | `5.31 ms` |
+| `bucket_fill/contiguous/512` | `945.14 µs` |
+| `bucket_fill/non_contiguous/512` | `808.98 µs` |
+| `bucket_fill/tolerance/512` | `1.19 ms` |
+
+### Codec Performance
+
+| Operation | Median |
+|------|------:|
+| `encode_png/512` | `1.25 ms` |
+| `decode_png/512` | `1.24 ms` |
+| `encode_jpeg/512` | `2.18 ms` |
+| `decode_jpeg/512` | `1.21 ms` |
+| `encode_webp/512` | `1.41 ms` |
+| `decode_webp/512` | `2.65 ms` |
+
+### Sprite and Shape Performance
+
+| Operation | Median |
+|------|------:|
+| `extract_palette/512/16colors` | `20.45 ms` |
+| `shape/rasterize_rectangle/512` | `869.95 µs` |
+| `shape/rasterize_polygon/512` | `12.64 ms` |
+
+### Transform Performance
+
+| Operation | Median |
+|------|------:|
+| `resize_nearest/512→1024` | `1.63 ms` |
+| `resize_bilinear/512→1024` | `1.01 ms` |
+| `resize_lanczos3/512→1024` | `1.59 ms` |
+| `resize_lanczos3/2048→4096` | `52.69 ms` |
+
+## Interpreting Results
+
+### Understanding Medians
+
+Criterion reports median times, which are more stable than means when dealing with occasional system interruptions or cache effects.
+
+### Hardware Dependency
+
+Benchmark results vary significantly based on:
+- CPU architecture and clock speed
+- Available SIMD instructions
+- Memory bandwidth
+- Cache hierarchy
+
+### Relative Performance
+
+Use these benchmarks to:
+- Compare different operations in kimg
+- Measure the impact of code changes
+- Identify performance bottlenecks in your compositions
+- Set performance budgets for your application
+
+### HTML Reports
+
+After running benchmarks, open `target/criterion/report/index.html` in a browser to view:
+- Detailed timing statistics
+- Historical performance trends
+- Regression detection
+- Violin plots and confidence intervals

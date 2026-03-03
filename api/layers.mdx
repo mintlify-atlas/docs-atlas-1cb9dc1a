@@ -1,0 +1,560 @@
+---
+title: "Layers"
+description: "Create, update, and manage layers in a composition"
+---
+
+## Layer Creation
+
+### addImageLayer()
+
+Add an image layer from raw RGBA pixel data.
+
+<ParamField path="options" type="ImageLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="rgba" type="ByteInput" required>
+      Raw RGBA pixel data (ArrayBuffer, Uint8Array, or array-like)
+    </ParamField>
+    <ParamField path="width" type="number" required>
+      Image width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Image height in pixels
+    </ParamField>
+    <ParamField path="x" type="number" default="0">
+      X position on canvas
+    </ParamField>
+    <ParamField path="y" type="number" default="0">
+      Y position on canvas
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (if adding to a group)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const layerId = comp.addImageLayer({
+  name: 'sprite',
+  rgba: pixelData,
+  width: 128,
+  height: 128,
+  x: 10,
+  y: 20
+});
+```
+
+### addPaintLayer()
+
+Add an empty editable paint layer.
+
+<ParamField path="options" type="PaintLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="width" type="number" required>
+      Layer width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Layer height in pixels
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (not currently supported)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const paintId = comp.addPaintLayer({
+  name: 'drawing',
+  width: 256,
+  height: 256
+});
+```
+
+### addFilterLayer()
+
+Add an HSL filter adjustment layer.
+
+<ParamField path="options" type="FilterLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (applies filter to group contents)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const filterId = comp.addFilterLayer({ name: 'color adjust' });
+comp.setFilterLayerConfig(filterId, {
+  hueDeg: 30,
+  saturation: 0.2,
+  brightness: 0.1
+});
+```
+
+### addGroupLayer()
+
+Add a group layer to organize nested layers.
+
+<ParamField path="options" type="GroupLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (for nested groups)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const groupId = comp.addGroupLayer({ name: 'effects' });
+```
+
+### addSolidColorLayer()
+
+Add a solid color fill layer.
+
+<ParamField path="options" type="SolidColorLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="color" type="ByteInput" required>
+      RGBA color (4-byte array)
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (not currently supported)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const bgId = comp.addSolidColorLayer({
+  name: 'background',
+  color: [255, 255, 255, 255]
+});
+```
+
+### addGradientLayer()
+
+Add a gradient fill layer.
+
+<ParamField path="options" type="GradientLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="stops" type="GradientStop[]" required>
+      Array of gradient stops with position (0-1) and color
+    </ParamField>
+    <ParamField path="direction" type="GradientDirection" default="horizontal">
+      Gradient direction: "horizontal", "vertical", "diagonalDown", "diagonalUp", or 0-3
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (not currently supported)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const gradId = comp.addGradientLayer({
+  name: 'gradient',
+  stops: [
+    { position: 0, color: [255, 0, 0, 255] },
+    { position: 1, color: [0, 0, 255, 255] }
+  ],
+  direction: 'vertical'
+});
+```
+
+### addPngLayer()
+
+Decode a PNG and add as an image layer.
+
+<ParamField path="options" type="PngLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="png" type="ByteInput" required>
+      PNG-encoded image data
+    </ParamField>
+    <ParamField path="x" type="number" default="0">
+      X position on canvas
+    </ParamField>
+    <ParamField path="y" type="number" default="0">
+      Y position on canvas
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID (not currently supported)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const layerId = comp.addPngLayer({
+  name: 'logo',
+  png: pngBytes,
+  x: 50,
+  y: 50
+});
+```
+
+## Layer Import
+
+### importImage()
+
+Auto-detect format and import as a layer.
+
+<ParamField path="options" type="ImportImageOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="bytes" type="ByteInput" required>
+      Image data (PNG, JPEG, WebP, or GIF)
+    </ParamField>
+    <ParamField path="x" type="number" default="0">
+      X position on canvas
+    </ParamField>
+    <ParamField path="y" type="number" default="0">
+      Y position on canvas
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+```javascript
+const layerId = comp.importImage({
+  name: 'photo',
+  bytes: imageBytes
+});
+```
+
+### importJpeg()
+
+Decode a JPEG and add as a layer.
+
+```javascript
+const layerId = comp.importJpeg({
+  name: 'photo',
+  bytes: jpegBytes,
+  x: 0,
+  y: 0
+});
+```
+
+### importWebp()
+
+Decode a WebP and add as a layer.
+
+```javascript
+const layerId = comp.importWebp({
+  name: 'image',
+  bytes: webpBytes
+});
+```
+
+### importGifFrames()
+
+Decode a GIF and add each frame as a separate layer.
+
+<ParamField path="options" type="{ bytes: ByteInput }" required>
+  <Expandable title="properties">
+    <ParamField path="bytes" type="ByteInput" required>
+      GIF image data
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerIds" type="Uint32Array">
+  Array of created layer IDs (one per frame)
+</ResponseField>
+
+```javascript
+const frameIds = comp.importGifFrames({ bytes: gifBytes });
+```
+
+### importPsd()
+
+Import PSD layers (experimental).
+
+<ParamField path="options" type="{ bytes: ByteInput }" required>
+  <Expandable title="properties">
+    <ParamField path="bytes" type="ByteInput" required>
+      PSD file data
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerIds" type="Uint32Array">
+  Array of created layer IDs
+</ResponseField>
+
+```javascript
+const layerIds = comp.importPsd({ bytes: psdBytes });
+```
+
+## Layer Management
+
+### updateLayer()
+
+Update layer properties with a patch object.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="patch" type="LayerUpdate" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string">
+      Layer name
+    </ParamField>
+    <ParamField path="visible" type="boolean">
+      Visibility
+    </ParamField>
+    <ParamField path="opacity" type="number">
+      Opacity (0-1)
+    </ParamField>
+    <ParamField path="x" type="number">
+      X position
+    </ParamField>
+    <ParamField path="y" type="number">
+      Y position
+    </ParamField>
+    <ParamField path="blendMode" type="string">
+      Blend mode name
+    </ParamField>
+    <ParamField path="maskInverted" type="boolean">
+      Invert layer mask
+    </ParamField>
+    <ParamField path="clipToBelow" type="boolean">
+      Clip to layer below
+    </ParamField>
+    <ParamField path="anchor" type="Anchor">
+      Transform anchor: "topLeft", "center", 0, or 1
+    </ParamField>
+    <ParamField path="flipX" type="boolean">
+      Flip horizontally
+    </ParamField>
+    <ParamField path="flipY" type="boolean">
+      Flip vertically
+    </ParamField>
+    <ParamField path="rotation" type="number">
+      Rotation in degrees
+    </ParamField>
+    <ParamField path="scaleX" type="number">
+      Horizontal scale
+    </ParamField>
+    <ParamField path="scaleY" type="number">
+      Vertical scale
+    </ParamField>
+    <ParamField path="filterConfig" type="FilterConfig">
+      Filter settings (for filter layers)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  True if layer was found and updated
+</ResponseField>
+
+```javascript
+comp.updateLayer(layerId, {
+  opacity: 0.8,
+  rotation: 45,
+  scaleX: 1.5,
+  anchor: 'center'
+});
+```
+
+### removeLayer()
+
+Delete a layer by ID.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  True if layer was found and removed
+</ResponseField>
+
+```javascript
+const removed = comp.removeLayer(layerId);
+```
+
+### moveLayer()
+
+Move a layer to a new parent and/or index.
+
+<ParamField path="id" type="number" required>
+  Layer ID to move
+</ParamField>
+
+<ParamField path="target" type="MoveLayerTarget" required>
+  <Expandable title="properties">
+    <ParamField path="parentId" type="number | null">
+      New parent group ID (null for top level)
+    </ParamField>
+    <ParamField path="index" type="number">
+      Index within parent's children
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  True if layer was moved
+</ResponseField>
+
+```javascript
+comp.moveLayer(layerId, { parentId: null, index: 0 });
+```
+
+### getLayer()
+
+Get layer metadata.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ResponseField name="layer" type="LayerInfo | null">
+  Layer metadata object or null if not found
+</ResponseField>
+
+```javascript
+const layer = comp.getLayer(layerId);
+console.log(layer.name, layer.width, layer.height);
+```
+
+### listLayers()
+
+List layers with optional filtering.
+
+<ParamField path="options" type="ListLayersOptions">
+  <Expandable title="properties">
+    <ParamField path="parentId" type="number | null">
+      List children of this group (null for top level)
+    </ParamField>
+    <ParamField path="recursive" type="boolean" default="true">
+      Include nested descendants
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layers" type="LayerInfo[]">
+  Array of layer metadata objects
+</ResponseField>
+
+```javascript
+const allLayers = comp.listLayers();
+const groupChildren = comp.listLayers({ parentId: groupId, recursive: false });
+```
+
+### layerCount()
+
+Get the number of top-level layers.
+
+<ResponseField name="count" type="number">
+  Number of top-level layers
+</ResponseField>
+
+```javascript
+const count = comp.layerCount();
+```
+
+## Group Operations
+
+### flattenGroup()
+
+Flatten a group layer into a single image layer.
+
+<ParamField path="groupId" type="number" required>
+  Group layer ID
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  True if group was flattened
+</ResponseField>
+
+```javascript
+comp.flattenGroup(groupId);
+```
+
+### removeFromGroup()
+
+Remove a child from a group.
+
+<ParamField path="groupId" type="number" required>
+  Group layer ID
+</ParamField>
+
+<ParamField path="childId" type="number" required>
+  Child layer ID to remove
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  True if child was removed
+</ResponseField>
+
+```javascript
+comp.removeFromGroup(groupId, childId);
+```
+
+## Layer Data
+
+### getLayerRgba()
+
+Get a layer's raw RGBA pixel buffer.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ResponseField name="rgba" type="Uint8Array">
+  Raw RGBA pixel data (or empty array if not an image/paint/shape layer)
+</ResponseField>
+
+```javascript
+const pixels = comp.getLayerRgba(layerId);
+```

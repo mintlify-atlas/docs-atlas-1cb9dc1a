@@ -1,0 +1,320 @@
+---
+title: "Filters"
+description: "Apply destructive filters to layers"
+---
+
+## Filter Layer Configuration
+
+### setFilterLayerConfig()
+
+Set all filter properties on a filter layer at once.
+
+<ParamField path="id" type="number" required>
+  Filter layer ID
+</ParamField>
+
+<ParamField path="config" type="FilterConfig" required>
+  <Expandable title="properties">
+    <ParamField path="hue" type="number">
+      Hue shift in radians
+    </ParamField>
+    <ParamField path="hueDeg" type="number">
+      Hue shift in degrees
+    </ParamField>
+    <ParamField path="saturation" type="number">
+      Saturation adjustment (-1 to 1)
+    </ParamField>
+    <ParamField path="lightness" type="number">
+      Lightness adjustment (-1 to 1)
+    </ParamField>
+    <ParamField path="alpha" type="number">
+      Alpha adjustment (-1 to 1)
+    </ParamField>
+    <ParamField path="brightness" type="number">
+      Brightness adjustment (-1 to 1)
+    </ParamField>
+    <ParamField path="contrast" type="number">
+      Contrast adjustment (-1 to 1)
+    </ParamField>
+    <ParamField path="temperature" type="number">
+      Color temperature shift (-1 to 1)
+    </ParamField>
+    <ParamField path="tint" type="number">
+      Tint shift (-1 to 1)
+    </ParamField>
+    <ParamField path="sharpen" type="number">
+      Sharpen amount (0 to 1)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+const filterId = comp.addFilterLayer({ name: 'adjustments' });
+comp.setFilterLayerConfig(filterId, {
+  hueDeg: 30,
+  saturation: 0.2,
+  brightness: 0.1,
+  contrast: 0.15
+});
+```
+
+You can also update filter config via `updateLayer()`:
+
+```javascript
+comp.updateLayer(filterId, {
+  filterConfig: {
+    hueDeg: 45,
+    saturation: 0.3
+  }
+});
+```
+
+## Destructive Filters
+
+These methods permanently modify a layer's pixel data.
+
+### invertLayer()
+
+Invert RGB channels.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+```javascript
+comp.invertLayer(layerId);
+```
+
+### posterizeLayer()
+
+Reduce color levels per channel.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="levels" type="number" required>
+  Number of levels per channel
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="PosterizeOptions">
+  <Expandable title="properties">
+    <ParamField path="levels" type="number" required>
+      Number of levels per channel
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.posterizeLayer(layerId, 4);
+// or
+comp.posterizeLayer(layerId, { levels: 4 });
+```
+
+### thresholdLayer()
+
+Convert to black/white based on luminance threshold.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="threshold" type="number" required>
+  Threshold value (0-1)
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="ThresholdOptions">
+  <Expandable title="properties">
+    <ParamField path="threshold" type="number" required>
+      Threshold value (0-1)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.thresholdLayer(layerId, 0.5);
+// or
+comp.thresholdLayer(layerId, { threshold: 0.5 });
+```
+
+### levelsLayer()
+
+Apply levels adjustment.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="shadows" type="number" required>
+  Input shadow point (0-1)
+</ParamField>
+
+<ParamField path="midtones" type="number" required>
+  Gamma correction for midtones
+</ParamField>
+
+<ParamField path="highlights" type="number" required>
+  Input highlight point (0-1)
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="LevelsOptions">
+  <Expandable title="properties">
+    <ParamField path="shadows" type="number" required>
+      Input shadow point (0-1)
+    </ParamField>
+    <ParamField path="midtones" type="number" required>
+      Gamma correction for midtones
+    </ParamField>
+    <ParamField path="highlights" type="number" required>
+      Input highlight point (0-1)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.levelsLayer(layerId, 0, 1, 1);
+// or
+comp.levelsLayer(layerId, {
+  shadows: 0,
+  midtones: 1,
+  highlights: 1
+});
+```
+
+### gradientMapLayer()
+
+Map luminance to a gradient.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="stops" type="GradientStop[]" required>
+  Array of gradient stops with position (0-1) and color
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="{ stops: GradientStop[] }">
+  <Expandable title="properties">
+    <ParamField path="stops" type="GradientStop[]" required>
+      Array of gradient stops
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.gradientMapLayer(layerId, [
+  { position: 0, color: [0, 0, 0, 255] },
+  { position: 1, color: [255, 255, 255, 255] }
+]);
+// or
+comp.gradientMapLayer(layerId, {
+  stops: [
+    { position: 0, color: [0, 0, 0, 255] },
+    { position: 1, color: [255, 255, 255, 255] }
+  ]
+});
+```
+
+## Blur Filters
+
+### boxBlurLayer()
+
+Apply box blur.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="radius" type="number" required>
+  Blur radius in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="RadiusOptions">
+  <Expandable title="properties">
+    <ParamField path="radius" type="number" required>
+      Blur radius in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.boxBlurLayer(layerId, 5);
+// or
+comp.boxBlurLayer(layerId, { radius: 5 });
+```
+
+### gaussianBlurLayer()
+
+Apply Gaussian blur (higher quality than box blur).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="radius" type="number" required>
+  Blur radius in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="RadiusOptions">
+  <Expandable title="properties">
+    <ParamField path="radius" type="number" required>
+      Blur radius in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.gaussianBlurLayer(layerId, 10);
+// or
+comp.gaussianBlurLayer(layerId, { radius: 10 });
+```
+
+## Convolution Filters
+
+### sharpenLayer()
+
+Apply sharpen convolution.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+```javascript
+comp.sharpenLayer(layerId);
+```
+
+### edgeDetectLayer()
+
+Apply Laplacian edge detection.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+```javascript
+comp.edgeDetectLayer(layerId);
+```
+
+### embossLayer()
+
+Apply emboss effect.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+```javascript
+comp.embossLayer(layerId);
+```

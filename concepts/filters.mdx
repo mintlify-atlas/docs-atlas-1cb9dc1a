@@ -1,0 +1,165 @@
+---
+title: Filters
+description: Non-destructive and pixel-level filter effects in kimg
+---
+
+kimg provides two categories of filters: non-destructive HSL/tone adjustments via filter layers, and pixel-level filters that modify layer buffers in place.
+
+## HSL and tone filters
+
+Filter layers apply non-destructive adjustments to all layers beneath them in the stack. All values default to zero (no-op).
+
+### Creating a filter layer
+
+```js
+const filterId = doc.addFilterLayer({
+  name: 'color correction',
+});
+
+doc.setFilterLayerConfig(filterId, {
+  brightness: 0.2,
+  contrast: 0.1,
+  saturation: 0.15,
+});
+```
+
+### Available adjustments
+
+| Property | Range | Description |
+|----------|-------|-------------|
+| `hue` / `hueDeg` | degrees | Hue offset (color rotation) |
+| `saturation` | -1.0 to 1.0 | Saturation delta |
+| `lightness` | -1.0 to 1.0 | Lightness delta |
+| `alpha` | -1.0 to 1.0 | Alpha delta |
+| `brightness` | -1.0 to 1.0 | Brightness adjustment |
+| `contrast` | -1.0 to 1.0 | Contrast adjustment |
+| `temperature` | -1.0 to 1.0 | Temperature shift (cool to warm) |
+| `tint` | -1.0 to 1.0 | Tint shift (green to magenta) |
+| `sharpen` | 0.0 to 1.0 | Sharpen strength |
+
+### Example: Color grading
+
+```js
+const filterId = doc.addFilterLayer({
+  name: 'warm tone',
+});
+
+doc.setFilterLayerConfig(filterId, {
+  temperature: 0.3,  // warmer
+  saturation: 0.2,    // more saturated
+  contrast: 0.15,     // higher contrast
+  brightness: -0.05,  // slightly darker
+});
+```
+
+## Pixel-level filters
+
+These filters modify a layer's pixel buffer directly.
+
+### Convolution filters
+
+#### Box blur
+
+Fast uniform blur:
+
+```js
+doc.boxBlurLayer(layerId, 3);
+```
+
+#### Gaussian blur
+
+Smooth photographic blur:
+
+```js
+doc.gaussianBlurLayer(layerId, 5);
+```
+
+#### Sharpen
+
+Enhance edge definition:
+
+```js
+doc.sharpenLayer(layerId);
+```
+
+#### Edge detect
+
+Highlight edges in the image:
+
+```js
+doc.edgeDetectLayer(layerId);
+```
+
+#### Emboss
+
+Create a 3D embossed effect:
+
+```js
+doc.embossLayer(layerId);
+```
+
+### Color filters
+
+#### Invert
+
+Invert all RGB channels (alpha is preserved):
+
+```js
+doc.invertLayer(layerId);
+```
+
+#### Posterize
+
+Reduce color depth per channel:
+
+```js
+doc.posterizeLayer(layerId, 4); // 4 levels per channel
+```
+
+#### Threshold
+
+Convert to black/white based on luminance:
+
+```js
+doc.thresholdLayer(layerId, 128); // threshold at midpoint
+```
+
+#### Levels
+
+Remap input range to output range with gamma curve:
+
+```js
+doc.levelsLayer(layerId, {
+  shadows: 0.0,    // input black point (0.0-1.0)
+  midtones: 1.0,   // gamma (1.0 = linear)
+  highlights: 1.0, // input white point (0.0-1.0)
+});
+```
+
+#### Gradient map
+
+Map pixel luminance to colors sampled from a gradient:
+
+```js
+doc.gradientMapLayer(layerId, [
+  { position: 0.0, color: [255, 0, 0, 255] },   // black → red
+  { position: 1.0, color: [0, 0, 255, 255] },   // white → blue
+]);
+```
+
+## Filter implementation
+
+The HSL filter pipeline is implemented in `~/workspace/source/crates/kimg-core/src/filter.rs:64-277`. It processes pixels in multiple passes:
+
+1. HSL adjustment + alpha delta (if needed)
+2. Optional sharpen kernel capture
+3. Tone adjustments (brightness, contrast, temperature, tint) with optional sharpen
+
+Convolution filters (blur, sharpen, edge detect, emboss) use kernel-based convolution defined in `~/workspace/source/crates/kimg-core/src/convolution.rs`.
+
+## Performance notes
+
+- Filter layers are applied during render, so they don't modify the source pixels
+- Pixel-level filters modify the buffer in place and cannot be undone
+- Convolution filters with larger radii are slower but produce better results
+- The sharpen adjustment in filter layers uses a 3x3 unsharp mask kernel

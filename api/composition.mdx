@@ -1,0 +1,230 @@
+---
+title: "Composition"
+description: "Core composition class for creating and managing image documents"
+---
+
+## Composition.create()
+
+Create a new composition with the specified dimensions.
+
+<ParamField path="width" type="number" required>
+  Canvas width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Canvas height in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="CompositionOptions">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      Canvas width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Canvas height in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="composition" type="Promise<Composition>">
+  The created composition instance
+</ResponseField>
+
+```javascript
+const comp = await Composition.create(512, 512);
+// or
+const comp = await Composition.create({ width: 512, height: 512 });
+```
+
+## Initialization
+
+### Browser
+
+The library auto-initializes in the browser. Simply import and use:
+
+```javascript
+import { Composition } from '@iamkaf/kimg';
+
+const comp = await Composition.create({ width: 128, height: 128 });
+```
+
+### Node.js
+
+The library auto-initializes in Node.js as well. The WASM module is loaded automatically:
+
+```javascript
+import { Composition } from '@iamkaf/kimg';
+
+const comp = await Composition.create({ width: 64, height: 64 });
+```
+
+## Export Methods
+
+### exportPng()
+
+Render the composition and encode as PNG.
+
+<ResponseField name="png" type="Uint8Array">
+  PNG-encoded image data
+</ResponseField>
+
+```javascript
+const png = comp.exportPng();
+```
+
+### exportJpeg()
+
+Render the composition and encode as JPEG.
+
+<ParamField path="quality" type="number" default="85">
+  JPEG quality (0-100)
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="ExportJpegOptions">
+  <Expandable title="properties">
+    <ParamField path="quality" type="number" default="85">
+      JPEG quality (0-100)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="jpeg" type="Uint8Array">
+  JPEG-encoded image data
+</ResponseField>
+
+```javascript
+const jpeg = comp.exportJpeg(90);
+// or
+const jpeg = comp.exportJpeg({ quality: 90 });
+```
+
+### exportWebp()
+
+Render the composition and encode as lossless WebP.
+
+<ResponseField name="webp" type="Uint8Array">
+  WebP-encoded image data
+</ResponseField>
+
+```javascript
+const webp = comp.exportWebp();
+```
+
+### renderRgba()
+
+Render the composition and return raw RGBA pixel data.
+
+<ResponseField name="rgba" type="Uint8Array">
+  Flat RGBA pixel array (width × height × 4 bytes)
+</ResponseField>
+
+```javascript
+const rgba = comp.renderRgba();
+```
+
+## Serialization
+
+### serialize()
+
+Serialize the composition to binary format for saving.
+
+<ResponseField name="data" type="Uint8Array">
+  Serialized composition data
+</ResponseField>
+
+```javascript
+const data = comp.serialize();
+// Save to file or database
+```
+
+### Composition.deserialize()
+
+Deserialize a composition from binary data.
+
+<ParamField path="data" type="ByteInput" required>
+  Serialized composition data (ArrayBuffer, Uint8Array, or array-like)
+</ParamField>
+
+<ResponseField name="composition" type="Promise<Composition>">
+  The deserialized composition instance
+</ResponseField>
+
+```javascript
+const comp = await Composition.deserialize(data);
+```
+
+## Canvas Operations
+
+### resizeCanvas()
+
+Resize the composition canvas.
+
+<ParamField path="width" type="number" required>
+  New canvas width
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  New canvas height
+</ParamField>
+
+Alternatively, pass a size object:
+
+<ParamField path="size" type="Size">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      New canvas width
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      New canvas height
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.resizeCanvas(1024, 768);
+// or
+comp.resizeCanvas({ width: 1024, height: 768 });
+```
+
+## Properties
+
+### width
+
+<ResponseField name="width" type="number">
+  Canvas width in pixels (read-only)
+</ResponseField>
+
+```javascript
+console.log(comp.width); // 512
+```
+
+### height
+
+<ResponseField name="height" type="number">
+  Canvas height in pixels (read-only)
+</ResponseField>
+
+```javascript
+console.log(comp.height); // 512
+```
+
+## Memory Management
+
+### free()
+
+Manually free the composition's WASM memory. Use this when you're done with a composition to avoid memory leaks.
+
+```javascript
+comp.free();
+```
+
+Or use the disposable pattern (if your environment supports it):
+
+```javascript
+using comp = await Composition.create(512, 512);
+// Automatically freed when scope exits
+```

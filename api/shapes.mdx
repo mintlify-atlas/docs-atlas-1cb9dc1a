@@ -1,0 +1,203 @@
+---
+title: "Shapes"
+description: "Create and style vector shape layers"
+---
+
+## addShapeLayer()
+
+Add a rasterized shape layer with fill and/or stroke styling.
+
+<ParamField path="options" type="ShapeLayerOptions" required>
+  <Expandable title="properties">
+    <ParamField path="name" type="string" required>
+      Layer name
+    </ParamField>
+    <ParamField path="type" type="ShapeLayerType" required>
+      Shape type: "rectangle", "roundedRect", "ellipse", "line", or "polygon"
+    </ParamField>
+    <ParamField path="x" type="number" default="0">
+      X position on canvas
+    </ParamField>
+    <ParamField path="y" type="number" default="0">
+      Y position on canvas
+    </ParamField>
+    <ParamField path="width" type="number">
+      Shape width (required for non-polygon shapes)
+    </ParamField>
+    <ParamField path="height" type="number">
+      Shape height (required for non-polygon shapes)
+    </ParamField>
+    <ParamField path="radius" type="number">
+      Corner radius (for roundedRect only)
+    </ParamField>
+    <ParamField path="fill" type="ByteInput">
+      Fill color as RGBA array [r, g, b, a]
+    </ParamField>
+    <ParamField path="stroke" type="ShapeStrokeOptions">
+      Stroke styling
+    </ParamField>
+    <ParamField path="points" type="ShapePoint[]">
+      Polygon vertices (for polygon shapes)
+    </ParamField>
+    <ParamField path="parentId" type="number">
+      Parent group layer ID
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="layerId" type="number">
+  The created layer's ID
+</ResponseField>
+
+## Shape Types
+
+### Rectangle
+
+```javascript
+const rectId = comp.addShapeLayer({
+  name: 'box',
+  type: 'rectangle',
+  width: 100,
+  height: 80,
+  fill: [255, 0, 0, 255],
+  stroke: { color: [0, 0, 0, 255], width: 2 }
+});
+```
+
+### Rounded Rectangle
+
+```javascript
+const roundedId = comp.addShapeLayer({
+  name: 'badge',
+  type: 'roundedRect',
+  x: 24,
+  y: 24,
+  width: 96,
+  height: 40,
+  radius: 12,
+  fill: [255, 0, 0, 255],
+  stroke: { color: [255, 255, 255, 255], width: 2 }
+});
+```
+
+### Ellipse
+
+```javascript
+const circleId = comp.addShapeLayer({
+  name: 'circle',
+  type: 'ellipse',
+  width: 64,
+  height: 64,
+  fill: [0, 255, 0, 255]
+});
+```
+
+### Line
+
+```javascript
+const lineId = comp.addShapeLayer({
+  name: 'line',
+  type: 'line',
+  width: 100,
+  height: 1,
+  stroke: { color: [0, 0, 255, 255], width: 3 }
+});
+```
+
+### Polygon
+
+For polygons, the `width` and `height` are optional. If not provided, they're derived from the points.
+
+```javascript
+const triangleId = comp.addShapeLayer({
+  name: 'triangle',
+  type: 'polygon',
+  points: [
+    { x: 50, y: 0 },
+    { x: 100, y: 100 },
+    { x: 0, y: 100 }
+  ],
+  fill: [255, 128, 0, 255],
+  stroke: { color: [0, 0, 0, 255], width: 2 }
+});
+```
+
+## Fill and Stroke Styling
+
+### Fill
+
+Fill color is specified as a 4-byte RGBA array:
+
+```javascript
+fill: [255, 0, 0, 255]  // Red, fully opaque
+fill: [0, 128, 255, 128] // Blue, 50% transparent
+```
+
+### Stroke
+
+Stroke is an object with `color` (RGBA array) and `width` (number):
+
+```javascript
+stroke: {
+  color: [0, 0, 0, 255],
+  width: 2
+}
+```
+
+### Fill and Stroke Requirements
+
+You must provide at least one of `fill` or `stroke`. You can provide both:
+
+```javascript
+const shapeId = comp.addShapeLayer({
+  name: 'outlined box',
+  type: 'rectangle',
+  width: 100,
+  height: 100,
+  fill: [255, 255, 255, 255],
+  stroke: { color: [0, 0, 0, 255], width: 3 }
+});
+```
+
+Or just one:
+
+```javascript
+// Fill only
+const filledId = comp.addShapeLayer({
+  name: 'filled',
+  type: 'ellipse',
+  width: 50,
+  height: 50,
+  fill: [255, 0, 0, 255]
+});
+
+// Stroke only
+const outlineId = comp.addShapeLayer({
+  name: 'outline',
+  type: 'rectangle',
+  width: 100,
+  height: 100,
+  stroke: { color: [0, 0, 255, 255], width: 2 }
+});
+```
+
+## Transforms
+
+Shape layers support the same non-destructive transforms as image layers:
+
+```javascript
+const shapeId = comp.addShapeLayer({
+  name: 'rotated rect',
+  type: 'rectangle',
+  width: 80,
+  height: 60,
+  fill: [255, 0, 0, 255]
+});
+
+comp.updateLayer(shapeId, {
+  anchor: 'center',
+  rotation: 45,
+  scaleX: 1.5,
+  scaleY: 1.5
+});
+```

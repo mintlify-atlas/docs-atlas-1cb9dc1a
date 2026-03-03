@@ -1,0 +1,234 @@
+---
+title: Contributing
+description: Learn how to contribute to kimg - development setup, testing, code style, and pull request process
+---
+
+Thanks for your interest in contributing to kimg! This guide will help you get set up and understand the development workflow.
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- Node.js and npm
+- [Rust](https://rustup.rs/) (stable toolchain)
+- `wasm32-unknown-unknown` target: `rustup target add wasm32-unknown-unknown`
+- `wasm-bindgen-cli`: `cargo install wasm-bindgen-cli`
+- (Optional) `wasm-opt` from [binaryen](https://github.com/WebAssembly/binaryen) for smaller builds
+
+## Getting Started
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/iamkaf/kimg.git
+    cd kimg
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Run core tests">
+    ```bash
+    cargo test -p kimg-core
+    ```
+    
+    All 148 core Rust tests should pass in under a second.
+  </Step>
+
+  <Step title="Build the WASM output">
+    ```bash
+    ./scripts/build.sh
+    ```
+    
+    This emits the consumable package into `dist/` alongside the generated wasm-bindgen output.
+  </Step>
+</Steps>
+
+## Project Structure
+
+Understanding the codebase layout will help you navigate and contribute effectively:
+
+```
+kimg/
+├── crates/
+│   ├── kimg-core/     # Pure Rust pixel engine (no WASM deps)
+│   │   ├── src/
+│   │   │   ├── blend.rs       # 16 blend modes
+│   │   │   ├── blit.rs        # Transformed blit (position, flip, rotation, opacity)
+│   │   │   ├── buffer.rs      # ImageBuffer with RGBA pixel data
+│   │   │   ├── codec.rs       # PNG, JPEG, WebP, GIF, experimental PSD import
+│   │   │   ├── color.rs       # RGB/HSL conversion, luminance, contrast
+│   │   │   ├── convolution.rs # Blur, sharpen, edge detect, emboss kernels
+│   │   │   ├── document.rs    # Document struct, layer tree, render pipeline
+│   │   │   ├── fill.rs        # Bucket fill for image/paint pixel layers
+│   │   │   ├── filter.rs      # HSL filters, invert, posterize, threshold, levels
+│   │   │   ├── layer.rs       # Layer types and common properties
+│   │   │   ├── serialize.rs   # Document save/load
+│   │   │   ├── sprite.rs      # Sprite sheet packing, contact sheets, quantization
+│   │   │   └── transform.rs   # Resize, rotate, crop, trim
+│   │   └── benches/           # Criterion.rs benchmarks
+│   └── kimg-wasm/     # wasm-bindgen API surface
+├── js/                # Tracked JS/TS package sources compiled into dist/
+├── dist/              # Built output (JS + WASM + TypeScript types)
+├── demo/              # Browser demo page
+└── scripts/           # Build scripts
+```
+
+The tracked JS/TS wrapper sources live in `js/`, the npm package metadata lives at the repo root, and `./scripts/build.sh` emits the consumable package into `dist/`.
+
+## Running Tests
+
+kimg has a comprehensive test suite covering Rust core functionality, JavaScript bindings, demo pages, and packaging.
+
+### Rust Tests
+
+Run all core Rust tests (148 tests covering blend modes, compositing, filters, transforms, codecs, serialization, sprites, color utilities, shape layers, bucket fill, and shared per-layer transforms):
+
+```bash
+cargo test -p kimg-core
+```
+
+Run tests for the entire workspace:
+
+```bash
+cargo test --workspace
+```
+
+Run Clippy for linting:
+
+```bash
+cargo clippy --workspace
+```
+
+### JavaScript Tests
+
+Run the Vitest suite that exercises the built JS/WASM facade, subpath exports, and Node-side initialization:
+
+```bash
+npm run test:js
+```
+
+This automatically builds the project before running tests.
+
+### Demo Tests
+
+Test the browser demo page with a headless browser to catch runtime failures:
+
+```bash
+npm run test:demo
+```
+
+This serves `/demo/` locally, loads the full visual suite, and fails if the page reports runtime failures, diagnostics, or an incomplete card set.
+
+### Package Tests
+
+Smoke-test the published package shape by packing the repo and installing the tarball into temporary Node/browser projects:
+
+```bash
+npm run test:pack
+```
+
+### Run All Tests
+
+Convenience command for the full Rust + package-layer test pass:
+
+```bash
+npm run test:all
+```
+
+## Development Workflow
+
+<Steps>
+  <Step title="Fork and create a branch">
+    Fork the repository and create a new branch from `main`:
+    
+    ```bash
+    git checkout -b my-feature-branch
+    ```
+  </Step>
+
+  <Step title="Make your changes">
+    Implement your feature or bug fix. Add tests for any new functionality you create.
+    
+    - Tests for Rust code go in `#[cfg(test)] mod tests` blocks within each source file
+    - Prefer concrete assertions over fuzzy ranges in tests when possible
+  </Step>
+
+  <Step title="Run the test suite">
+    Before committing, run the comprehensive test suite:
+    
+    ```bash
+    npm run test:all
+    cargo clippy --workspace
+    ```
+    
+    If you changed the browser demo or visual test suite:
+    ```bash
+    npm run test:demo
+    ```
+    
+    If you changed packaging, exports, or the build pipeline:
+    ```bash
+    npm run test:pack
+    ```
+  </Step>
+
+  <Step title="Format your code">
+    Run the formatters to ensure consistent code style:
+    
+    **For Rust code:**
+    ```bash
+    cargo fmt
+    ```
+    
+    **For JavaScript/TypeScript code:**
+    ```bash
+    npm run fmt:js
+    ```
+    
+    Check formatting without making changes:
+    ```bash
+    npm run fmt:js:check
+    ```
+  </Step>
+
+  <Step title="Open a pull request">
+    Push your changes and open a pull request against the `main` branch. Describe your changes clearly and reference any related issues.
+  </Step>
+</Steps>
+
+## Code Style Guidelines
+
+- **Rust**: Run `cargo fmt` before committing
+- **JavaScript/TypeScript**: Run `npm run fmt:js` before committing (uses `oxfmt` for formatting)
+- **Dependencies**: Keep dependencies minimal - WASM binary size matters
+- **Tests**: Place tests in `#[cfg(test)] mod tests` blocks within each source file
+- **Assertions**: Prefer concrete assertions over fuzzy ranges when possible
+
+## Running the Demo
+
+The demo page at `demo/index.html` loads from `dist/`. Serve it with any static file server:
+
+```bash
+./scripts/demo.sh
+```
+
+## What to Work On
+
+Check the [open issues](https://github.com/iamkaf/kimg/issues) for current priorities. Areas where help is most useful:
+
+- Documentation improvements
+- Benchmarks and performance optimization
+- SIMD optimization
+- Fuzz testing
+- Bug fixes and feature requests
+
+If you're unsure about whether a change would be welcome, open an issue first to discuss it.
+
+## License
+
+By contributing to kimg, you agree that your contributions will be licensed under the [MIT License](https://github.com/iamkaf/kimg/blob/main/LICENSE).

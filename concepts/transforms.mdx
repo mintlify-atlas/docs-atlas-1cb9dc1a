@@ -1,0 +1,155 @@
+---
+title: Transforms
+description: Non-destructive and destructive transform operations in kimg
+---
+
+kimg supports two categories of transforms: non-destructive per-layer transforms that preserve the original pixel data, and destructive operations that permanently modify the buffer.
+
+## Non-destructive transforms
+
+Image, paint, and shape layers support non-destructive transforms. These transforms are applied at render time without modifying the source pixel data.
+
+### Position
+
+Move a layer by setting its `x` and `y` coordinates:
+
+```js
+doc.setLayerPosition(layerId, 10, 20);
+
+// or
+doc.updateLayer(layerId, { x: 10, y: 20 });
+```
+
+### Rotation
+
+Rotate a layer by an arbitrary angle (in degrees, clockwise):
+
+```js
+doc.updateLayer(layerId, {
+  rotation: 30,
+});
+```
+
+### Scale
+
+Scale a layer horizontally and vertically:
+
+```js
+doc.updateLayer(layerId, {
+  scaleX: 1.25,
+  scaleY: 0.75,
+});
+```
+
+### Flip
+
+Flip a layer along the X or Y axis:
+
+```js
+doc.updateLayer(layerId, {
+  flipX: false,
+  flipY: true,
+});
+```
+
+### Anchor points
+
+The anchor determines the origin point for transforms. Two options are available:
+
+- `topLeft` (default): Transforms are applied relative to the top-left corner
+- `center`: Transforms are applied relative to the center of the layer
+
+```js
+doc.updateLayer(layerId, {
+  anchor: 'center',
+  rotation: 45,
+});
+```
+
+### Combined example
+
+All transform properties can be set together:
+
+```js
+doc.updateLayer(layerId, {
+  x: 10,
+  y: -4,
+  anchor: "center",
+  flipX: false,
+  flipY: true,
+  rotation: 30,
+  scaleX: 1.25,
+  scaleY: 0.75,
+});
+```
+
+## Destructive transforms
+
+These operations permanently modify the layer's pixel buffer.
+
+### Resize
+
+Resize a layer using one of three algorithms:
+
+#### Nearest-neighbor
+
+Fast and lossless for pixel art:
+
+```js
+doc.resizeLayerNearest(layerId, 256, 256);
+```
+
+#### Bilinear
+
+Smooth interpolation for photos:
+
+```js
+doc.resizeLayerBilinear(layerId, 512, 512);
+```
+
+#### Lanczos3
+
+Highest quality for photo downscaling (slower):
+
+```js
+doc.resizeLayerLanczos3(layerId, 128, 128);
+```
+
+### Crop
+
+Extract a rectangular sub-region:
+
+```js
+doc.cropLayer(layerId, {
+  x: 16,
+  y: 16,
+  width: 64,
+  height: 64,
+});
+```
+
+### Trim
+
+Auto-crop to the bounding box of non-transparent pixels:
+
+```js
+doc.trimLayerAlpha(layerId);
+```
+
+### Rotate (destructive)
+
+Rotate by an arbitrary angle with bilinear interpolation. The output buffer is sized to contain the full rotated image:
+
+```js
+doc.rotateLayer(layerId, 45.5);
+```
+
+<Note>
+For 90-degree-increment rotations, prefer the non-destructive `rotation` property which is lossless and faster.
+</Note>
+
+## Transform performance
+
+Non-destructive transforms are cached at render time. If you apply the same transform multiple times, only the first render will compute the transformed raster. Subsequent renders reuse the cached result until the source buffer or transform properties change.
+
+See `~/workspace/source/crates/kimg-core/src/transform.rs:1-18` for resize algorithm details and `~/workspace/source/crates/kimg-core/src/layer.rs:132-168` for the transform cache implementation.

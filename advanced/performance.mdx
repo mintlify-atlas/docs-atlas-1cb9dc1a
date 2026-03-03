@@ -1,0 +1,101 @@
+---
+title: Performance
+description: Performance characteristics and optimization strategies in kimg
+---
+
+## Performance Overview
+
+kimg is built for speed. Originally extracted from the [Spriteform](https://spriteform.com) compositor (which was pure JS), the Rust+WASM version runs **5-15x faster** than the original JavaScript implementation.
+
+## SIMD Support
+
+The build process generates two WASM binaries to maximize performance across different runtime environments:
+
+- **kimg_wasm_bg.wasm** - Baseline WASM target for maximum compatibility
+- **kimg_wasm_simd_bg.wasm** - SIMD-enabled build with `simd128` instructions for runtimes that support it
+
+The SIMD build provides significant performance improvements for operations that can be vectorized, particularly in resize operations.
+
+## fast_image_resize Integration
+
+For RGBA bilinear and Lanczos3 resize operations, kimg uses the `fast_image_resize` crate, which provides:
+
+- **Host SIMD acceleration** on native builds (SSE4.1, AVX2, NEON)
+- **WASM SIMD support** in the browser when the `simd128` artifact is loaded
+- **Optimized resize algorithms** that outperform naive implementations
+
+This integration is particularly beneficial for:
+- High-quality image scaling
+- Large image resizing (e.g., 2048×2048 → 4096×4096)
+- Batch resize operations
+
+## Optimization Strategies
+
+### Transform Caching
+
+kimg caches transformed layer renders to avoid redundant computation. When the same transformed layer is rendered multiple times without changes:
+
+- First render performs the full transform calculation
+- Subsequent renders use the cached result
+- Cache is invalidated when layer properties change
+
+This optimization is particularly effective for compositions with multiple transformed layers that remain static between renders.
+
+### Blend Mode Performance
+
+Different blend modes have varying performance characteristics:
+
+- **Normal blend** (Porter-Duff source-over) is the fastest
+- **Simple modes** (Multiply, Screen, Darken, Lighten) have minimal overhead
+- **Complex modes** (ColorDodge, ColorBurn, SoftLight) involve more computation
+- **HSL-based modes** (Hue, Saturation, Color, Luminosity) require color space conversion
+
+For performance-critical compositions, prefer simpler blend modes when the visual difference is acceptable.
+
+### Convolution Kernel Optimization
+
+Convolution-based filters (blur, sharpen, edge detect) scale with kernel size:
+
+- **3×3 kernels** are fastest for simple effects
+- **5×5 kernels** provide better quality at higher cost
+- **Box blur** is optimized for speed over quality
+- **Gaussian blur** provides high quality with acceptable performance
+
+### Filter Pipeline
+
+Filters applied to groups affect all child layers. For optimal performance:
+
+- Apply filters to individual layers when possible
+- Use group-level filters only when the effect should apply to the composite
+- Minimize the number of filter layers in the render pipeline
+
+### Shape Rasterization
+
+Shape layers are rasterized on-demand:
+
+- **Simple shapes** (rectangles, ellipses) are very fast
+- **Polygons** scale with vertex count and complexity
+- Document-level caching reduces repeated rasterization cost
+- Prefer primitive shapes over complex polygons when possible
+
+## Memory Considerations
+
+### Buffer Management
+
+Each layer maintains its own RGBA buffer:
+
+- Memory usage scales with: `width × height × 4 bytes × layer_count`
+- A 512×512 10-layer composition uses ~10 MB
+- A 2048×2048 10-layer composition uses ~160 MB
+
+### WASM Memory Limits
+
+WASM has a default 2GB memory limit. For very large compositions:
+
+- Monitor memory usage in long-running applications
+- Dispose of unused compositions to free memory
+- Consider tiling or streaming for extremely large images
+
+## Profiling Performance
+
+For detailed performance analysis, use the built-in benchmarks to measure your specific use case. See the [Benchmarks](/advanced/benchmarks) page for information on running and interpreting benchmark results.

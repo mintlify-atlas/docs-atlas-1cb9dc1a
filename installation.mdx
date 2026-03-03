@@ -1,0 +1,173 @@
+---
+title: Installation
+description: Install kimg and set up your development environment for Rust+WASM image compositing
+---
+
+## Package installation
+
+Install kimg from npm using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install @iamkaf/kimg
+```
+
+```bash yarn
+yarn add @iamkaf/kimg
+```
+
+```bash pnpm
+pnpm add @iamkaf/kimg
+```
+
+</CodeGroup>
+
+<Note>
+kimg works identically in Node.js and the browser with no additional configuration required.
+</Note>
+
+## Prerequisites
+
+kimg has minimal runtime prerequisites:
+
+- **Node.js**: Version 18 or later (for Node.js usage)
+- **Modern browser**: Any browser with WebAssembly support (for browser usage)
+
+No native dependencies or build tools are required for using the package.
+
+## Verification
+
+Verify your installation by checking if you can import the main module:
+
+<CodeGroup>
+
+```javascript Node.js
+import { Composition } from '@iamkaf/kimg';
+
+const doc = await Composition.create({ width: 128, height: 128 });
+console.log(`Created composition: ${doc.width}x${doc.height}`);
+```
+
+```javascript Browser
+import { Composition } from '@iamkaf/kimg';
+
+const doc = await Composition.create({ width: 128, height: 128 });
+console.log(`Created composition: ${doc.width}x${doc.height}`);
+```
+
+</CodeGroup>
+
+If this runs without errors, kimg is installed correctly.
+
+## Development setup (building from source)
+
+If you want to contribute to kimg or build from source, you'll need additional tools:
+
+### Prerequisites for development
+
+- **Node.js** and npm
+- **Rust** (latest stable version)
+- **wasm32-unknown-unknown** target
+- **wasm-bindgen-cli**
+
+### Installation steps
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/iamkaf/kimg.git
+    cd kimg
+    ```
+  </Step>
+  
+  <Step title="Install Node.js dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Install Rust target">
+    Add the WebAssembly compilation target:
+    
+    ```bash
+    rustup target add wasm32-unknown-unknown
+    ```
+  </Step>
+  
+  <Step title="Install wasm-bindgen-cli">
+    ```bash
+    cargo install wasm-bindgen-cli
+    ```
+  </Step>
+  
+  <Step title="Build the project">
+    Run the build script to compile the WASM binaries and TypeScript wrapper:
+    
+    ```bash
+    ./scripts/build.sh
+    ```
+    
+    This builds the consumable JS/WASM package into `dist/`.
+  </Step>
+</Steps>
+
+### Build output
+
+The build process generates:
+
+- **dist/index.js** — Main JavaScript entry point
+- **dist/kimg_wasm_bg.wasm** — Baseline WASM binary
+- **dist/kimg_wasm_simd_bg.wasm** — SIMD-optimized WASM binary
+- **dist/*.d.ts** — TypeScript type definitions
+
+<Tip>
+The package automatically selects the SIMD binary when the runtime supports it, providing better performance without manual configuration.
+</Tip>
+
+## WASM initialization
+
+kimg automatically initializes the WASM module when you create your first composition. For advanced use cases, you can manually preload the WASM module:
+
+```javascript
+import preload from '@iamkaf/kimg';
+
+// Preload WASM module
+await preload();
+
+// Now create compositions
+const doc = await Composition.create({ width: 128, height: 128 });
+```
+
+### Custom WASM path
+
+In Node.js environments with custom module resolution, you can provide a custom WASM path:
+
+```javascript
+import { readFileSync } from 'node:fs';
+import preload from '@iamkaf/kimg';
+
+const wasm = readFileSync('./path/to/kimg_wasm_bg.wasm');
+await preload({ module_or_path: wasm });
+```
+
+## Subpath exports
+
+kimg provides several subpath exports for specific functionality:
+
+```javascript
+// Base64 RGBA helpers (pure JS, no WASM init needed)
+import { rgbaToBase64, base64ToRgba } from '@iamkaf/kimg/base64';
+
+// Readable text color picker
+import { readableTextColor } from '@iamkaf/kimg/color-utils';
+
+// Low-level WASM API (browser)
+import initRaw, { Composition as RawComposition } from '@iamkaf/kimg/raw';
+```
+
+## Next steps
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get your first composition working with real examples
+</Card>

@@ -1,0 +1,157 @@
+---
+title: Layers
+description: Understanding layer types and hierarchy in kimg
+---
+
+Layers are the building blocks of a kimg composition. Each layer has common properties (position, opacity, blend mode, visibility) and type-specific data that determines how it renders.
+
+## Layer types
+
+kimg supports seven layer types:
+
+### Image
+
+An RGBA buffer with optional non-destructive transforms (position, rotation, scale, flip).
+
+```js
+const layerId = doc.addImageLayer({
+  name: 'sprite',
+  rgba: rgbaPixels,
+  width: 128,
+  height: 128,
+  x: 0,
+  y: 0,
+});
+```
+
+### Paint
+
+An editable RGBA buffer. Use this for layers that need pixel-level editing with tools like bucket fill.
+
+```js
+const paintId = doc.addPaintLayer({
+  name: 'background',
+  width: 256,
+  height: 256,
+});
+```
+
+### Filter
+
+A non-destructive adjustment layer that applies HSL, brightness, contrast, temperature, tint, and sharpen adjustments to all layers beneath it.
+
+```js
+const filterId = doc.addFilterLayer({
+  name: 'color correction',
+});
+
+doc.setFilterLayerConfig(filterId, {
+  brightness: 0.2,
+  contrast: 0.1,
+  saturation: 0.15,
+});
+```
+
+### Group
+
+A container for organizing child layers. Groups can be nested and support scoped filter application.
+
+```js
+const groupId = doc.addGroupLayer({
+  name: 'character',
+});
+
+// Add layers to the group
+doc.addImageLayer({
+  name: 'head',
+  rgba: headPixels,
+  width: 64,
+  height: 64,
+  parentId: groupId,
+});
+```
+
+### SolidColor
+
+A flat color fill that spans the entire canvas.
+
+```js
+const bgId = doc.addSolidColorLayer({
+  name: 'background',
+  color: [255, 255, 255, 255], // white
+});
+```
+
+### Gradient
+
+A linear color gradient fill with customizable stops and direction.
+
+```js
+const gradientId = doc.addGradientLayer({
+  name: 'sky',
+  stops: [
+    { position: 0.0, color: [135, 206, 235, 255] },
+    { position: 1.0, color: [255, 255, 255, 255] },
+  ],
+  direction: 'vertical',
+});
+```
+
+### Shape
+
+A rasterized vector-style shape primitive (rectangle, rounded rectangle, ellipse, line, polygon) with fill and stroke styling.
+
+```js
+const badgeId = doc.addShapeLayer({
+  name: "Badge",
+  type: "roundedRect",
+  x: 24,
+  y: 24,
+  width: 96,
+  height: 40,
+  radius: 12,
+  fill: [255, 0, 0, 255],
+  stroke: { color: [255, 255, 255, 255], width: 2 },
+});
+```
+
+## Common layer properties
+
+All layers share these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | number | Unique identifier assigned when the layer is created |
+| `name` | string | Human-readable layer name |
+| `visible` | boolean | Whether the layer should be rendered |
+| `opacity` | number | Global opacity multiplier (0.0 to 1.0) |
+| `x`, `y` | number | Position offset from the top-left of the canvas |
+| `blendMode` | string | How this layer blends with content below it |
+| `mask` | ImageBuffer | Optional grayscale mask (white = visible, black = hidden) |
+| `maskInverted` | boolean | Inverts the mask luminance |
+| `clipToBelow` | boolean | Clips this layer to the alpha of the layer directly below it |
+
+## Updating layers
+
+Use `updateLayer()` to modify layer properties:
+
+```js
+doc.updateLayer(layerId, {
+  opacity: 0.8,
+  anchor: 'center',
+  rotation: 22.5,
+  scaleX: 1.25,
+  scaleY: 0.75,
+});
+```
+
+## Layer hierarchy
+
+Layers are rendered from bottom to top in the layer stack. Layers inside a group are composited together, then the group is blended onto the canvas as a single unit.
+
+```js
+const layers = doc.listLayers();
+layers.forEach(layer => {
+  console.log(`${layer.name} (${layer.kind}) at depth ${layer.depth}`);
+});
+```

@@ -1,0 +1,161 @@
+---
+title: Masks
+description: Layer masks and clipping masks in kimg
+---
+
+kimg supports two types of masks: grayscale layer masks and clipping masks. Both are non-destructive and can be applied to any layer type.
+
+## Layer masks
+
+A layer mask is a grayscale RGBA buffer where the luminance of each pixel controls the visibility of the corresponding pixel in the layer. White pixels (255, 255, 255) are fully visible, black pixels (0, 0, 0) are fully hidden, and gray values create partial transparency.
+
+### Setting a layer mask
+
+```js
+const layerId = doc.addImageLayer({
+  name: 'masked image',
+  rgba: imagePixels,
+  width: 128,
+  height: 128,
+});
+
+// Create a mask (white circle on black background)
+const maskPixels = new Uint8Array(128 * 128 * 4);
+// ... fill maskPixels with your mask data ...
+
+doc.setLayerMask(layerId, {
+  rgba: maskPixels,
+  width: 128,
+  height: 128,
+});
+```
+
+### Inverted masks
+
+You can invert the mask luminance so that black = visible and white = hidden:
+
+```js
+doc.setLayerMask(layerId, {
+  rgba: maskPixels,
+  width: 128,
+  height: 128,
+  inverted: true,
+});
+
+// or update an existing mask:
+doc.setLayerMaskInverted(layerId, true);
+```
+
+### Removing a mask
+
+```js
+doc.clearLayerMask(layerId);
+```
+
+### Checking for masks
+
+```js
+const layer = doc.getLayer(layerId);
+if (layer.hasMask) {
+  console.log(`Mask is ${layer.maskInverted ? 'inverted' : 'normal'}`);
+}
+```
+
+## Clipping masks
+
+A clipping mask constrains a layer's visibility to the alpha channel of the layer directly below it. This is useful for adding textures, patterns, or colors that conform to the shape of another layer.
+
+### Using clipping masks
+
+```js
+const doc = await Composition.create({ width: 128, height: 128 });
+
+// Base shape layer
+const shapeId = doc.addShapeLayer({
+  name: 'circle',
+  type: 'ellipse',
+  width: 100,
+  height: 100,
+  fill: [255, 255, 255, 255],
+});
+
+// Texture layer clipped to the circle
+const textureId = doc.addImageLayer({
+  name: 'texture',
+  rgba: texturePixels,
+  width: 128,
+  height: 128,
+});
+
+doc.setLayerClipToBelow(textureId, true);
+```
+
+Now the texture layer will only be visible where the circle layer has non-zero alpha.
+
+### Stacking clipping masks
+
+You can stack multiple layers that all clip to the same base layer:
+
+```js
+const baseId = doc.addShapeLayer({
+  name: 'base',
+  type: 'roundedRect',
+  width: 80,
+  height: 80,
+  radius: 12,
+  fill: [255, 255, 255, 255],
+});
+
+const color1 = doc.addSolidColorLayer({
+  name: 'red fill',
+  color: [255, 0, 0, 255],
+});
+doc.setLayerClipToBelow(color1, true);
+
+const color2 = doc.addSolidColorLayer({
+  name: 'blue overlay',
+  color: [0, 0, 255, 128],
+});
+doc.setLayerClipToBelow(color2, true);
+doc.setLayerBlendMode(color2, 'overlay');
+```
+
+## Mask internals
+
+Layer masks are stored as optional `ImageBuffer` fields in `LayerCommon` (see `~/workspace/source/crates/kimg-core/src/layer.rs:88-112`):
+
+```rust
+pub struct LayerCommon {
+    pub mask: Option<ImageBuffer>,
+    pub mask_inverted: bool,
+    pub clip_to_below: bool,
+    // ... other fields
+}
+```
+
+During rendering:
+
+1. Layer masks are applied by multiplying the layer's alpha channel with the mask's luminance
+2. Inverted masks flip the luminance values before applying
+3. Clipping masks multiply the layer's alpha with the alpha of the layer below
+
+See the benchmark results in the README for clipping/masking overhead:
+
+- `render/clipped_layer_stack/512`: 18.40 ms
+- `render/masked_layer_stack/512`: 10.59 ms
+
+## Combining masks
+
+You can use both a layer mask and a clipping mask on the same layer:
+
+```js
+doc.setLayerMask(layerId, {
+  rgba: maskPixels,
+  width: 128,
+  height: 128,
+});
+
+doc.setLayerClipToBelow(layerId, true);
+```
+
+The layer mask is applied first, then the result is clipped to the layer below.

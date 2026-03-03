@@ -1,80 +1,371 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with kimg in minutes by creating your first layer-based image composition
 ---
 
-## Get started in three steps
+## Your first composition
 
-Get your documentation site running locally and make your first customization.
+This guide walks you through creating a simple image composition with layers, transforms, and export. The API is identical in Node.js and the browser.
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Import and create a composition">
+    Start by importing the `Composition` class and creating a new document:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```javascript
+    import { Composition } from '@iamkaf/kimg';
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    const doc = await Composition.create({ width: 128, height: 128 });
+    ```
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Note>
+    The `create` method is async because it initializes the WASM module on first use.
+    </Note>
+  </Step>
+  
+  <Step title="Add an image layer">
+    Add your first layer with RGBA pixel data:
+    
+    ```javascript
+    // Assume rgbaPixels is a Uint8Array with 128*128*4 bytes
+    const layerId = doc.addImageLayer({
+      name: 'sprite',
+      rgba: rgbaPixels,
+      width: 128,
+      height: 128,
+      x: 0,
+      y: 0,
+    });
+    ```
+    
+    The method returns a numeric layer ID you can use to reference this layer.
+  </Step>
+  
+  <Step title="Apply transforms">
+    Apply non-destructive transforms to the layer:
+    
+    ```javascript
+    doc.updateLayer(layerId, {
+      opacity: 0.8,
+      anchor: 'center',
+      rotation: 22.5,
+      scaleX: 1.25,
+      scaleY: 0.75,
+    });
+    ```
+    
+    <Tip>
+    Transforms are non-destructive and cached for performance. You can change them at any time without re-rendering the original pixels.
+    </Tip>
+  </Step>
+  
+  <Step title="Export to PNG">
+    Render the composition and export as PNG:
+    
+    ```javascript
+    const png = doc.exportPng();
+    ```
+    
+    The `exportPng` method returns a `Uint8Array` containing the PNG file data.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Complete example
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Here's a complete working example that creates a composition, adds layers, and exports:
 
-### Step 3: Go live
+<Tabs>
+  <Tab title="Browser">
+    ```javascript
+    import { Composition } from '@iamkaf/kimg';
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    // Create a 128×128 composition
+    const doc = await Composition.create({ width: 128, height: 128 });
+
+    // Add an image layer
+    const layerId = doc.addImageLayer({
+      name: 'sprite',
+      rgba: rgbaPixels, // Your RGBA pixel data
+      width: 128,
+      height: 128,
+      x: 0,
+      y: 0,
+    });
+
+    // Apply transforms
+    doc.updateLayer(layerId, {
+      opacity: 0.8,
+      anchor: 'center',
+      rotation: 22.5,
+      scaleX: 1.25,
+      scaleY: 0.75,
+    });
+
+    // Export to PNG
+    const png = doc.exportPng();
+
+    // Create a download link
+    const blob = new Blob([png], { type: 'image/png' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'composition.png';
+    a.click();
+    ```
+  </Tab>
+  
+  <Tab title="Node.js">
+    ```javascript
+    import { Composition } from '@iamkaf/kimg';
+    import { writeFileSync } from 'node:fs';
+
+    // Create a 64×64 composition
+    const doc = await Composition.create({ width: 64, height: 64 });
+
+    // Add an image layer
+    const layerId = doc.addImageLayer({
+      name: 'sprite',
+      rgba: rgbaPixels, // Your RGBA pixel data
+      width: 64,
+      height: 64,
+      x: 0,
+      y: 0,
+    });
+
+    // Apply transforms
+    doc.updateLayer(layerId, {
+      opacity: 0.8,
+      anchor: 'center',
+      rotation: 22.5,
+      scaleX: 1.25,
+      scaleY: 0.75,
+    });
+
+    // Export to PNG and save to disk
+    const png = doc.exportPng();
+    writeFileSync('composition.png', png);
+    ```
+  </Tab>
+</Tabs>
+
+## Working with shape layers
+
+Shape layers are vector-style primitives that render to pixels:
+
+```javascript
+const doc = await Composition.create({ width: 200, height: 200 });
+
+// Add a rounded rectangle badge
+const badgeId = doc.addShapeLayer({
+  name: "Badge",
+  type: "roundedRect",
+  x: 24,
+  y: 24,
+  width: 96,
+  height: 40,
+  radius: 12,
+  fill: [255, 0, 0, 255], // Red
+  stroke: { color: [255, 255, 255, 255], width: 2 }, // White border
+});
+
+const png = doc.exportPng();
+```
+
+<Note>
+Shape types include: `rectangle`, `roundedRect`, `ellipse`, `line`, and `polygon`.
+</Note>
+
+## Per-layer transforms
+
+You can apply transforms to any layer type:
+
+```javascript
+doc.updateLayer(layerId, {
+  x: 10,
+  y: -4,
+  anchor: "center",
+  flipX: false,
+  flipY: true,
+  rotation: 30,
+  scaleX: 1.25,
+  scaleY: 0.75,
+});
+```
+
+### Anchor points
+
+- `topLeft` or `top_left` — Transform around top-left corner (default)
+- `center` — Transform around center point
+
+## Bucket fill
+
+Fill regions of a layer with a color:
+
+```javascript
+// Bucket fill at layer-local coordinates (12, 18)
+doc.bucketFillLayer(layerId, {
+  x: 12,
+  y: 18,
+  color: [0, 255, 0, 255], // Green
+  contiguous: true, // Only fill connected pixels
+  tolerance: 0, // Exact color match
+});
+```
+
+<Tip>
+Tolerance is alpha-aware and checked per channel across RGBA. Higher values allow filling similar colors.
+</Tip>
+
+## Importing images
+
+kimg can import PNG, JPEG, WebP, and GIF files:
+
+```javascript
+// Auto-detect format and import
+const layerId = doc.importImage({
+  name: 'photo',
+  bytes: imageBytes, // Uint8Array of file contents
+  x: 0,
+  y: 0,
+});
+
+// Import GIF frames as separate layers
+const frameIds = doc.importGifFrames({ bytes: gifBytes });
+console.log(`Imported ${frameIds.length} frames`);
+```
+
+## Exporting to different formats
+
+Export your composition to PNG, JPEG, or WebP:
+
+<CodeGroup>
+
+```javascript PNG
+const png = doc.exportPng();
+```
+
+```javascript JPEG
+const jpeg = doc.exportJpeg({ quality: 85 });
+```
+
+```javascript WebP
+const webp = doc.exportWebp();
+```
+
+```javascript Raw RGBA
+const rgba = doc.renderRgba();
+// Returns Uint8Array with width * height * 4 bytes
+```
+
+</CodeGroup>
+
+## Layer management
+
+Manage your layer stack programmatically:
+
+```javascript
+// List all layers
+const layers = doc.listLayers();
+layers.forEach(layer => {
+  console.log(`${layer.name}: ${layer.kind} at (${layer.x}, ${layer.y})`);
+});
+
+// Get specific layer info
+const info = doc.getLayer(layerId);
+console.log(info.name, info.visible, info.opacity);
+
+// Remove a layer
+doc.removeLayer(layerId);
+
+// Count layers
+const count = doc.layerCount();
+```
+
+## Working with groups
+
+Organize layers into groups:
+
+```javascript
+// Create a group
+const groupId = doc.addGroupLayer({ name: 'Effects' });
+
+// Add layers to the group
+const imageId = doc.addImageLayer({
+  name: 'photo',
+  rgba: pixels,
+  width: 128,
+  height: 128,
+  parentId: groupId, // Add to group
+});
+
+// Add a filter layer to the group (affects all children)
+const filterId = doc.addFilterLayer({
+  name: 'color adjust',
+  parentId: groupId,
+});
+
+doc.setFilterLayerConfig(filterId, {
+  saturation: 0.5,
+  brightness: 0.2,
+});
+```
+
+<Note>
+Filter layers apply their effects to all layers below them in the same group, enabling scoped filter application.
+</Note>
+
+## Color utilities
+
+kimg provides standalone color utilities:
+
+```javascript
+import { hexToRgb, rgbToHex, relativeLuminance, contrastRatio } from '@iamkaf/kimg';
+
+const rgb = await hexToRgb('#ff8000'); // Uint8Array [255, 128, 0]
+const hex = await rgbToHex(255, 128, 0); // '#ff8000'
+
+const luma = await relativeLuminance('#3b82f6'); // 0.2355 (WCAG 2.x)
+const contrast = await contrastRatio('#ffffff', '#000000'); // 21.0
+```
+
+## Memory management
+
+kimg compositions are backed by WASM memory. Free them when done:
+
+```javascript
+const doc = await Composition.create({ width: 128, height: 128 });
+
+// ... use the composition
+
+doc.free(); // Release WASM memory
+```
+
+<Tip>
+If you're using TypeScript with explicit resource management, compositions support `Symbol.dispose`:
+
+```typescript
+using doc = await Composition.create({ width: 128, height: 128 });
+// Automatically freed when out of scope
+```
+</Tip>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you've created your first composition, explore more features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Blend modes" icon="blend">
+    Learn about the 16 blend modes for layer compositing
+  </Card>
+  
+  <Card title="Filters" icon="filter">
+    Apply HSL adjustments, blur, sharpen, and more
+  </Card>
+  
+  <Card title="Masks" icon="mask">
+    Use layer masks and clipping masks for precise control
+  </Card>
+  
+  <Card title="Sprite tools" icon="grid">
+    Pack sprite sheets and create contact sheets
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

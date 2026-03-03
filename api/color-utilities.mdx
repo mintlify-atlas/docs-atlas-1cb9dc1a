@@ -1,0 +1,387 @@
+---
+title: "Color Utilities"
+description: "Standalone color conversion and analysis functions"
+---
+
+These are free functions that don't require a Composition instance. They're useful for color manipulation outside of the main image compositing workflow.
+
+## Color Conversion
+
+### hexToRgb()
+
+Parse a hex color string to RGB.
+
+<ParamField path="hex" type="string" required>
+  Hex color string (e.g., "#ff8000" or "ff8000")
+</ParamField>
+
+<ResponseField name="rgb" type="Promise<Uint8Array>">
+  RGB values as Uint8Array [r, g, b]
+</ResponseField>
+
+```javascript
+import { hexToRgb } from '@iamkaf/kimg';
+
+const rgb = await hexToRgb('#ff8000');
+// Uint8Array [255, 128, 0]
+```
+
+### rgbToHex()
+
+Convert RGB values to a hex color string.
+
+<ParamField path="r" type="number" required>
+  Red channel (0-255)
+</ParamField>
+
+<ParamField path="g" type="number" required>
+  Green channel (0-255)
+</ParamField>
+
+<ParamField path="b" type="number" required>
+  Blue channel (0-255)
+</ParamField>
+
+Alternatively, pass an RGB object:
+
+<ParamField path="rgb" type="RgbColor">
+  <Expandable title="properties">
+    <ParamField path="r" type="number" required>
+      Red channel (0-255)
+    </ParamField>
+    <ParamField path="g" type="number" required>
+      Green channel (0-255)
+    </ParamField>
+    <ParamField path="b" type="number" required>
+      Blue channel (0-255)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="hex" type="Promise<string>">
+  Hex color string (e.g., "#ff8000")
+</ResponseField>
+
+```javascript
+import { rgbToHex } from '@iamkaf/kimg';
+
+const hex = await rgbToHex(255, 128, 0);
+// '#ff8000'
+
+// or
+const hex = await rgbToHex({ r: 255, g: 128, b: 0 });
+```
+
+## WCAG Color Analysis
+
+### relativeLuminance()
+
+Calculate WCAG 2.x relative luminance for a hex color.
+
+<ParamField path="hex" type="string" required>
+  Hex color string
+</ParamField>
+
+<ResponseField name="luminance" type="Promise<number>">
+  Relative luminance value (0-1)
+</ResponseField>
+
+```javascript
+import { relativeLuminance } from '@iamkaf/kimg';
+
+const lum = await relativeLuminance('#3b82f6');
+// 0.2355
+```
+
+### contrastRatio()
+
+Calculate WCAG 2.x contrast ratio between two hex colors.
+
+<ParamField path="a" type="string" required>
+  First hex color string
+</ParamField>
+
+<ParamField path="b" type="string" required>
+  Second hex color string
+</ParamField>
+
+<ResponseField name="ratio" type="Promise<number>">
+  Contrast ratio (1.0-21.0)
+</ResponseField>
+
+```javascript
+import { contrastRatio } from '@iamkaf/kimg';
+
+const ratio = await contrastRatio('#ffffff', '#000000');
+// 21.0 (maximum contrast)
+
+const ratio2 = await contrastRatio('#3b82f6', '#ffffff');
+// 3.46
+```
+
+WCAG 2.1 requires:
+- **AA normal text**: ratio ≥ 4.5
+- **AA large text**: ratio ≥ 3.0
+- **AAA normal text**: ratio ≥ 7.0
+- **AAA large text**: ratio ≥ 4.5
+
+## Dominant Color
+
+### dominantRgbFromRgba()
+
+Extract the dominant color from raw RGBA pixel data.
+
+<ParamField path="data" type="ByteInput" required>
+  Raw RGBA pixel data
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  Image width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Image height in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="GeometryOptions">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      Image width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Image height in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="rgb" type="Promise<Uint8Array>">
+  Dominant RGB color as Uint8Array [r, g, b]
+</ResponseField>
+
+```javascript
+import { dominantRgbFromRgba } from '@iamkaf/kimg';
+
+const dominant = await dominantRgbFromRgba(pixels, 128, 128);
+// or
+const dominant = await dominantRgbFromRgba(pixels, { width: 128, height: 128 });
+// Uint8Array [r, g, b]
+```
+
+## Readable Text Color
+
+From the `@iamkaf/kimg/color-utils` subpath (pure JS, no WASM):
+
+### readableTextColor()
+
+Determine whether black or white text is more readable on a given background color.
+
+<ParamField path="backgroundColor" type="string" required>
+  Background hex color string
+</ParamField>
+
+<ResponseField name="textColor" type="string">
+  Either "#000000" (black) or "#ffffff" (white)
+</ResponseField>
+
+```javascript
+import { readableTextColor } from '@iamkaf/kimg/color-utils';
+
+readableTextColor('#1a1a2e'); // '#ffffff'
+readableTextColor('#f0f0f0'); // '#000000'
+readableTextColor('#3b82f6'); // '#ffffff'
+```
+
+## Base64 Helpers
+
+From the `@iamkaf/kimg/base64` subpath (pure JS, no WASM):
+
+### rgbaToBase64()
+
+Encode RGBA pixel data as a base64 string.
+
+<ParamField path="rgba" type="Uint8Array" required>
+  Raw RGBA pixel data
+</ParamField>
+
+<ResponseField name="base64" type="string">
+  Base64-encoded string
+</ResponseField>
+
+```javascript
+import { rgbaToBase64 } from '@iamkaf/kimg/base64';
+
+const base64 = rgbaToBase64(pixels);
+```
+
+### base64ToRgba()
+
+Decode a base64 string to RGBA pixel data.
+
+<ParamField path="base64" type="string" required>
+  Base64-encoded string
+</ParamField>
+
+<ResponseField name="rgba" type="Uint8Array">
+  Raw RGBA pixel data
+</ResponseField>
+
+```javascript
+import { base64ToRgba } from '@iamkaf/kimg/base64';
+
+const pixels = base64ToRgba(base64String);
+```
+
+## Advanced Color Utilities
+
+### extractPaletteFromRgba()
+
+Extract a color palette from raw RGBA pixel data.
+
+<ParamField path="data" type="ByteInput" required>
+  Raw RGBA pixel data
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  Image width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Image height in pixels
+</ParamField>
+
+<ParamField path="maxColors" type="number" required>
+  Maximum number of colors to extract
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="GeometryWithMaxColorsOptions">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      Image width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Image height in pixels
+    </ParamField>
+    <ParamField path="maxColors" type="number" required>
+      Maximum number of colors to extract
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="palette" type="Promise<Uint8Array>">
+  Flat RGBA palette data [r, g, b, a, r, g, b, a, ...]
+</ResponseField>
+
+```javascript
+import { extractPaletteFromRgba } from '@iamkaf/kimg';
+
+const palette = await extractPaletteFromRgba(pixels, 128, 128, 16);
+// or
+const palette = await extractPaletteFromRgba(pixels, {
+  width: 128,
+  height: 128,
+  maxColors: 16
+});
+```
+
+### quantizeRgba()
+
+Quantize raw RGBA pixel data to a specific palette.
+
+<ParamField path="data" type="ByteInput" required>
+  Raw RGBA pixel data
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  Image width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Image height in pixels
+</ParamField>
+
+<ParamField path="palette" type="ByteInput" required>
+  Flat RGBA palette data
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="GeometryWithPaletteOptions">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      Image width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Image height in pixels
+    </ParamField>
+    <ParamField path="palette" type="ByteInput" required>
+      Flat RGBA palette data
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="rgba" type="Promise<Uint8Array>">
+  Quantized RGBA pixel data
+</ResponseField>
+
+```javascript
+import { quantizeRgba } from '@iamkaf/kimg';
+
+const quantized = await quantizeRgba(pixels, 128, 128, palette);
+// or
+const quantized = await quantizeRgba(pixels, {
+  width: 128,
+  height: 128,
+  palette
+});
+```
+
+### histogramRgba()
+
+Compute a per-channel histogram for raw RGBA pixel data.
+
+<ParamField path="data" type="ByteInput" required>
+  Raw RGBA pixel data
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  Image width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Image height in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="GeometryOptions">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      Image width in pixels
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Image height in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="histogram" type="Promise<Uint32Array>">
+  Flat array of 1024 u32 values: r[0..256], g[256..512], b[512..768], a[768..1024]
+</ResponseField>
+
+```javascript
+import { histogramRgba } from '@iamkaf/kimg';
+
+const hist = await histogramRgba(pixels, 128, 128);
+// or
+const hist = await histogramRgba(pixels, { width: 128, height: 128 });
+
+// Access channels:
+const redChannel = hist.slice(0, 256);
+const greenChannel = hist.slice(256, 512);
+const blueChannel = hist.slice(512, 768);
+const alphaChannel = hist.slice(768, 1024);
+```

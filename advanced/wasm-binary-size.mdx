@@ -1,0 +1,125 @@
+---
+title: WASM Binary Size
+description: WebAssembly binary sizes and optimization details for kimg
+---
+
+## Binary Sizes
+
+Current local release build sizes (as of the latest build):
+
+### Baseline Build
+
+**File:** `dist/kimg_wasm_bg.wasm`
+
+- **Uncompressed:** 934 KB
+- **Gzipped:** 346,582 bytes (~338 KB)
+
+The baseline build targets maximum compatibility and runs on all WebAssembly-capable environments.
+
+### SIMD Build
+
+**File:** `dist/kimg_wasm_simd_bg.wasm`
+
+- **Uncompressed:** 1.1 MB
+- **Gzipped:** 385,388 bytes (~376 KB)
+
+The SIMD build includes `simd128` instructions for better performance on supported runtimes.
+
+## Size Comparison
+
+| Build Type | Uncompressed | Gzipped | Compression Ratio |
+|------------|-------------|---------|-------------------|
+| Baseline   | 934 KB      | 338 KB  | 36.2%            |
+| SIMD       | 1.1 MB      | 376 KB  | 34.2%            |
+| **Difference** | **+166 KB** | **+38 KB** | | |
+
+The SIMD build adds approximately **38 KB** when gzipped, which is a reasonable trade-off for the performance benefits on supported platforms.
+
+## Context and Comparison
+
+kimg's binary size is significantly smaller than alternatives:
+
+- **kimg (baseline):** 338 KB gzipped
+- **kimg (SIMD):** 376 KB gzipped
+- **magick-wasm:** 7 MB+ (mentioned in README as a comparison point)
+
+For a full-featured image compositing engine with layers, blend modes, filters, and multi-format I/O, kimg's binary size is optimized for web delivery.
+
+## Size Optimization
+
+The build process includes several optimizations:
+
+### Release Profile
+
+The Rust compiler uses release mode with optimizations:
+- LTO (Link-Time Optimization)
+- Code size optimizations
+- Dead code elimination
+
+### wasm-opt
+
+The build pipeline runs `wasm-opt` for additional size reduction:
+- Removes unused functions
+- Optimizes WASM instruction sequences
+- Reduces binary bloat
+
+### Compression
+
+When serving WASM files:
+- Always use **gzip** or **brotli** compression
+- Configure web servers with proper `Content-Encoding` headers
+- Gzip typically reduces size to **~35%** of uncompressed
+- Brotli can achieve even better compression ratios
+
+## Binary Size Variations
+
+Binary sizes vary slightly based on:
+
+- **Rust toolchain version** - Newer compilers may produce different output
+- **Optimization settings** - Build profile configuration affects size
+- **Feature flags** - Enabled Cargo features change included code
+- **Dependencies** - Upstream crate updates can impact size
+
+The sizes listed above represent typical builds and may differ by a few kilobytes in your environment.
+
+## Loading Strategy
+
+For optimal user experience:
+
+### Progressive Enhancement
+
+1. Detect SIMD support in the runtime
+2. Load `kimg_wasm_simd_bg.wasm` if supported
+3. Fall back to `kimg_wasm_bg.wasm` for compatibility
+
+### Lazy Loading
+
+Load WASM only when needed:
+
+```javascript
+// Don't load at app startup
+// Load when user initiates image editing
+import { Composition } from '@iamkaf/kimg';
+const doc = await Composition.create({ width: 128, height: 128 });
+```
+
+### Caching
+
+Configure aggressive caching for WASM files:
+
+```
+Cache-Control: public, max-age=31536000, immutable
+```
+
+WASM binaries are versioned with the package, so they can be cached indefinitely.
+
+## Monitoring Size
+
+Track binary size over time to detect regressions:
+
+1. Run `./scripts/build.sh`
+2. Check `dist/kimg_wasm_bg.wasm` size
+3. Compare against previous builds
+4. Investigate significant increases
+
+Consider adding size budgets to your CI pipeline to prevent unexpected binary bloat.

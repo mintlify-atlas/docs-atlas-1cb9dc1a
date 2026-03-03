@@ -1,0 +1,159 @@
+---
+title: Building from Source
+description: Build kimg from source code with Rust and WASM toolchain
+---
+
+## Prerequisites
+
+You need the following tools installed:
+
+- **Node.js and npm** - For package management and build scripts
+- **Rust** - The Rust compiler and toolchain
+- **wasm32-unknown-unknown target** - WebAssembly compilation target
+- **wasm-bindgen-cli** - WASM bindings generator
+
+## Installation
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Add WASM target">
+    ```bash
+    rustup target add wasm32-unknown-unknown
+    ```
+  </Step>
+
+  <Step title="Install wasm-bindgen-cli">
+    ```bash
+    cargo install wasm-bindgen-cli
+    ```
+  </Step>
+
+  <Step title="Build the project">
+    ```bash
+    ./scripts/build.sh
+    ```
+  </Step>
+</Steps>
+
+## Build Output
+
+The build process outputs compiled files to `dist/`, which contains:
+
+- **JavaScript wrapper** - TypeScript-compiled JS facade
+- **TypeScript types** - Type definitions for the API
+- **WASM binaries** - Two WebAssembly modules:
+  - `kimg_wasm_bg.wasm` - Baseline WASM target
+  - `kimg_wasm_simd_bg.wasm` - SIMD-enabled build for runtimes with `simd128` support
+
+The build uses `tsgo` for the tracked TypeScript wrapper layer.
+
+## Project Structure
+
+```
+kimg/
+├── crates/
+│   ├── kimg-core/     # Pure Rust pixel engine (no WASM deps)
+│   │   ├── src/
+│   │   │   ├── blend.rs       # 16 blend modes
+│   │   │   ├── blit.rs        # Transformed blit (position, flip, rotation, opacity)
+│   │   │   ├── buffer.rs      # ImageBuffer with RGBA pixel data
+│   │   │   ├── codec.rs       # PNG, JPEG, WebP, GIF, experimental PSD import
+│   │   │   ├── color.rs       # RGB/HSL conversion, luminance, contrast
+│   │   │   ├── convolution.rs # Blur, sharpen, edge detect, emboss kernels
+│   │   │   ├── document.rs    # Document struct, layer tree, render pipeline
+│   │   │   ├── fill.rs        # Bucket fill for image/paint pixel layers
+│   │   │   ├── filter.rs      # HSL filters, invert, posterize, threshold, levels
+│   │   │   ├── layer.rs       # Layer types and common properties
+│   │   │   ├── serialize.rs   # Document save/load
+│   │   │   ├── sprite.rs      # Sprite sheet packing, contact sheets, quantization
+│   │   │   └── transform.rs   # Resize, rotate, crop, trim
+│   │   └── benches/           # Criterion.rs benchmarks
+│   └── kimg-wasm/     # wasm-bindgen API surface
+├── js/                # Tracked JS/TS package sources compiled into dist/
+├── dist/              # Built output (JS + WASM + TypeScript types)
+├── demo/              # Browser demo page
+└── scripts/           # Build scripts
+```
+
+## Running Tests
+
+kimg includes comprehensive test coverage with 148 core Rust tests plus package-layer tests.
+
+<Steps>
+  <Step title="Run Rust core tests">
+    ```bash
+    cargo test -p kimg-core
+    ```
+    
+    This runs 148 tests covering blend modes, compositing, filters, transforms, codecs, serialization, sprites, color utilities, shape layers, bucket fill, and shared per-layer transforms.
+  </Step>
+
+  <Step title="Run JavaScript format check">
+    ```bash
+    npm run fmt:js:check
+    ```
+    
+    Uses `oxfmt` for tracked TypeScript sources and tests.
+  </Step>
+
+  <Step title="Run JavaScript tests">
+    ```bash
+    npm run test:js
+    ```
+    
+    Vitest suite that exercises the built JS/WASM facade, subpath exports, and Node-side initialization behavior.
+  </Step>
+
+  <Step title="Run demo tests">
+    ```bash
+    npm run test:demo
+    ```
+    
+    Serves `/demo/` locally, loads the full visual suite in a headless browser, and fails if the page reports runtime failures, diagnostics, or an incomplete card set.
+  </Step>
+
+  <Step title="Run package tests">
+    ```bash
+    npm run test:pack
+    ```
+    
+    Packs the repo, installs the tarball into temporary Node/browser projects, and smoke-tests the published package shape instead of the local source tree.
+  </Step>
+
+  <Step title="Run all tests">
+    ```bash
+    npm run test:all
+    ```
+    
+    Convenience entrypoint for the full Rust + package-layer test pass.
+  </Step>
+</Steps>
+
+## Formatting
+
+Format TypeScript sources:
+
+```bash
+npm run fmt:js
+```
+
+Check formatting without changes:
+
+```bash
+npm run fmt:js:check
+```
+
+## Local Development
+
+The demo page at `demo/index.html` loads from the `dist/` directory. After building, you can open it in a browser to test the compiled WASM binaries.
+
+For iterative development:
+
+1. Make changes to Rust or TypeScript sources
+2. Run `./scripts/build.sh` to rebuild
+3. Refresh the demo page or re-run tests

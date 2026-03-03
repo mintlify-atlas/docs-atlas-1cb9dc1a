@@ -1,0 +1,345 @@
+---
+title: "Transforms"
+description: "Transform layers with resize, crop, rotation, and non-destructive transforms"
+---
+
+## Non-Destructive Transforms
+
+These transforms are applied during rendering without modifying the layer's pixel data. Use `updateLayer()` to set them.
+
+### Transform Properties
+
+<ParamField path="x" type="number">
+  X position on canvas
+</ParamField>
+
+<ParamField path="y" type="number">
+  Y position on canvas
+</ParamField>
+
+<ParamField path="anchor" type="Anchor">
+  Transform anchor point: "topLeft", "top_left", "center", 0, or 1
+</ParamField>
+
+<ParamField path="flipX" type="boolean">
+  Flip horizontally
+</ParamField>
+
+<ParamField path="flipY" type="boolean">
+  Flip vertically
+</ParamField>
+
+<ParamField path="rotation" type="number">
+  Rotation in degrees
+</ParamField>
+
+<ParamField path="scaleX" type="number">
+  Horizontal scale factor
+</ParamField>
+
+<ParamField path="scaleY" type="number">
+  Vertical scale factor
+</ParamField>
+
+```javascript
+comp.updateLayer(layerId, {
+  x: 100,
+  y: 50,
+  anchor: 'center',
+  flipX: false,
+  flipY: true,
+  rotation: 45,
+  scaleX: 1.5,
+  scaleY: 1.5
+});
+```
+
+You can also use individual setters:
+
+### setLayerPosition()
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="x" type="number" required>
+  X position
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  Y position
+</ParamField>
+
+Alternatively, pass a position object:
+
+<ParamField path="position" type="Position">
+  <Expandable title="properties">
+    <ParamField path="x" type="number" required>
+      X position
+    </ParamField>
+    <ParamField path="y" type="number" required>
+      Y position
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.setLayerPosition(layerId, 100, 50);
+// or
+comp.setLayerPosition(layerId, { x: 100, y: 50 });
+```
+
+### setLayerAnchor()
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="anchor" type="Anchor" required>
+  Transform anchor: "topLeft", "top_left", "center", 0, or 1
+</ParamField>
+
+```javascript
+comp.setLayerAnchor(layerId, 'center');
+```
+
+### setLayerFlip()
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="flipX" type="boolean" required>
+  Flip horizontally
+</ParamField>
+
+<ParamField path="flipY" type="boolean" required>
+  Flip vertically
+</ParamField>
+
+Alternatively, pass a flip options object:
+
+<ParamField path="options" type="FlipOptions">
+  <Expandable title="properties">
+    <ParamField path="flipX" type="boolean">
+      Flip horizontally
+    </ParamField>
+    <ParamField path="flipY" type="boolean">
+      Flip vertically
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.setLayerFlip(layerId, true, false);
+// or
+comp.setLayerFlip(layerId, { flipX: true, flipY: false });
+```
+
+### setLayerRotation()
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="rotation" type="number" required>
+  Rotation in degrees
+</ParamField>
+
+```javascript
+comp.setLayerRotation(layerId, 45);
+```
+
+## Destructive Resize
+
+These methods permanently modify the layer's pixel data.
+
+### resizeLayerNearest()
+
+Resize using nearest-neighbor interpolation (ideal for pixel art).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  New width
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  New height
+</ParamField>
+
+Alternatively, pass a size object:
+
+<ParamField path="size" type="Size">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      New width
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      New height
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.resizeLayerNearest(layerId, 256, 256);
+// or
+comp.resizeLayerNearest(layerId, { width: 256, height: 256 });
+```
+
+### resizeLayerBilinear()
+
+Resize using bilinear interpolation (smooth, general purpose).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  New width
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  New height
+</ParamField>
+
+Alternatively, pass a size object:
+
+<ParamField path="size" type="Size">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      New width
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      New height
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.resizeLayerBilinear(layerId, 512, 512);
+// or
+comp.resizeLayerBilinear(layerId, { width: 512, height: 512 });
+```
+
+### resizeLayerLanczos3()
+
+Resize using Lanczos3 interpolation (highest quality, slower).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  New width
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  New height
+</ParamField>
+
+Alternatively, pass a size object:
+
+<ParamField path="size" type="Size">
+  <Expandable title="properties">
+    <ParamField path="width" type="number" required>
+      New width
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      New height
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.resizeLayerLanczos3(layerId, 1024, 1024);
+// or
+comp.resizeLayerLanczos3(layerId, { width: 1024, height: 1024 });
+```
+
+## Crop and Trim
+
+### cropLayer()
+
+Crop a layer to a rectangular region.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="x" type="number" required>
+  Crop rectangle X
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  Crop rectangle Y
+</ParamField>
+
+<ParamField path="width" type="number" required>
+  Crop rectangle width
+</ParamField>
+
+<ParamField path="height" type="number" required>
+  Crop rectangle height
+</ParamField>
+
+Alternatively, pass a rectangle object:
+
+<ParamField path="rect" type="Position & Size">
+  <Expandable title="properties">
+    <ParamField path="x" type="number" required>
+      Crop rectangle X
+    </ParamField>
+    <ParamField path="y" type="number" required>
+      Crop rectangle Y
+    </ParamField>
+    <ParamField path="width" type="number" required>
+      Crop rectangle width
+    </ParamField>
+    <ParamField path="height" type="number" required>
+      Crop rectangle height
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.cropLayer(layerId, 10, 10, 100, 100);
+// or
+comp.cropLayer(layerId, { x: 10, y: 10, width: 100, height: 100 });
+```
+
+### trimLayerAlpha()
+
+Trim transparent edges from a layer.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+```javascript
+comp.trimLayerAlpha(layerId);
+```
+
+## Destructive Rotation
+
+### rotateLayer()
+
+Rotate a layer by an arbitrary angle (permanently modifies pixels).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="angleDeg" type="number" required>
+  Rotation angle in degrees
+</ParamField>
+
+```javascript
+comp.rotateLayer(layerId, 90);
+```
+
+<Note>
+For non-destructive rotation, use `updateLayer()` with the `rotation` property instead.
+</Note>

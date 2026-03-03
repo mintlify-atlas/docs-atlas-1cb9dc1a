@@ -1,0 +1,108 @@
+---
+title: Introduction
+description: A Rust+WASM image compositing engine for layer-based image manipulation in Node.js and the browser
+---
+
+## What is kimg?
+
+kimg is a Rust+WASM image compositing engine that brings Photoshop-like capabilities to your code. Think of it as a headless Photoshop you can `import` — layers, blend modes, filters, masks, and multi-format I/O, all running in release-built WASM binaries.
+
+It works identically in Node.js and the browser with no native dependencies, no Canvas API, and no DOM required.
+
+## Why kimg exists
+
+Most image libraries treat images as single buffers — apply a filter, resize, encode, done. If you need *layers* composited together with blend modes, scoped filters, and a render pipeline, your options are either:
+
+- **Browser-only** (like Photopea)
+- **Commercial** (like IMG.LY)
+- **Massive** (magick-wasm at 7MB+)
+
+kimg fills that gap. Originally extracted from the [Spriteform](https://spriteform.com) compositor, it now runs **5-15x faster** than the original pure JavaScript implementation and doesn't require Node.js or Electron.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Layer-based compositing" icon="layer-group">
+    Image, Paint, Filter, Group, SolidColor, Gradient, and Shape layers with nested groups and scoped filter application
+  </Card>
+  
+  <Card title="16 blend modes" icon="blend">
+    Normal, Multiply, Screen, Overlay, Darken, Lighten, ColorDodge, ColorBurn, HardLight, SoftLight, Difference, Exclusion, Hue, Saturation, Color, and Luminosity
+  </Card>
+  
+  <Card title="Masks and clipping" icon="mask">
+    Grayscale layer masks and clipping masks for precise control over layer visibility
+  </Card>
+  
+  <Card title="Powerful filters" icon="filter">
+    HSL adjustments, brightness/contrast, temperature/tint, sharpen, invert, posterize, threshold, levels, gradient map, blur, edge detect, and emboss
+  </Card>
+  
+  <Card title="Non-destructive transforms" icon="arrows-maximize">
+    Per-layer translate, scale, rotate, and flip for image, paint, and shape layers
+  </Card>
+  
+  <Card title="Multi-format support" icon="file-image">
+    PNG, JPEG, WebP, GIF (animated frames → layers), and experimental PSD layer import with auto-detection
+  </Card>
+  
+  <Card title="Paint tools" icon="paint-brush">
+    Bucket fill for image and paint layers with contiguous/non-contiguous modes and alpha-aware tolerance matching
+  </Card>
+  
+  <Card title="Sprite utilities" icon="grid">
+    Sprite sheet packer, contact sheet grids, pixel-art upscale, color quantization, and batch render pipeline
+  </Card>
+</CardGroup>
+
+## Real-world use cases
+
+### Dynamic image generation
+
+Generate social media cards, thumbnails, or marketing assets on-demand with layers, text overlays, and filters.
+
+### Game asset pipelines
+
+Composite sprite sheets, apply filters to game assets, or generate character variations programmatically.
+
+### Image processing workflows
+
+Build complex image manipulation pipelines with layers, masks, and blend modes that run consistently across platforms.
+
+### Batch processing
+
+Process large sets of images with the same layer-based operations, filters, and export settings.
+
+## Performance
+
+kimg achieves excellent performance through Rust optimization and WASM compilation:
+
+- Single 512×512 image render: **5.29 ms**
+- 10-layer composition: **8.31 ms**
+- PNG encode/decode: **~1.25 ms**
+- Non-destructive transforms are cached for repeated renders
+
+<Note>
+These are representative medians from local benchmark runs and are hardware-dependent.
+</Note>
+
+## WASM binary size
+
+The compiled WASM binaries are optimized for production use:
+
+- **kimg_wasm_bg.wasm**: 934 KB uncompressed, **347 KB gzipped**
+- **kimg_wasm_simd_bg.wasm**: 1.1 MB uncompressed, **385 KB gzipped**
+
+The package automatically selects the SIMD version when supported by the runtime.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install kimg and set up your development environment
+  </Card>
+  
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your first composition working in minutes
+  </Card>
+</CardGroup>

@@ -1,0 +1,258 @@
+---
+title: "Sprites"
+description: "Sprite sheet packing, contact sheets, and pixel art utilities"
+---
+
+## Sprite Sheet Packing
+
+### packSprites()
+
+Pack layers into a sprite sheet atlas using shelf bin-packing.
+
+<ParamField path="layerIds" type="ArrayLike<number>" required>
+  Array of layer IDs to pack
+</ParamField>
+
+<ParamField path="maxWidth" type="number" required>
+  Maximum atlas width in pixels
+</ParamField>
+
+<ParamField path="padding" type="number" default="0">
+  Padding between sprites in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="PackSpritesOptions">
+  <Expandable title="properties">
+    <ParamField path="layerIds" type="ArrayLike<number>" required>
+      Array of layer IDs to pack
+    </ParamField>
+    <ParamField path="maxWidth" type="number" required>
+      Maximum atlas width in pixels
+    </ParamField>
+    <ParamField path="padding" type="number" default="0">
+      Padding between sprites in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="rgba" type="Uint8Array">
+  Raw RGBA pixel data of the packed sprite sheet
+</ResponseField>
+
+```javascript
+const layerIds = [1, 2, 3, 4, 5];
+const atlasData = comp.packSprites(layerIds, 512, 2);
+// or
+const atlasData = comp.packSprites({
+  layerIds: layerIds,
+  maxWidth: 512,
+  padding: 2
+});
+```
+
+### packSpritesJson()
+
+Pack layers into a sprite sheet and return JSON metadata.
+
+<ParamField path="layerIds" type="ArrayLike<number>" required>
+  Array of layer IDs to pack
+</ParamField>
+
+<ParamField path="maxWidth" type="number" required>
+  Maximum atlas width in pixels
+</ParamField>
+
+<ParamField path="padding" type="number" default="0">
+  Padding between sprites in pixels
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="PackSpritesOptions">
+  <Expandable title="properties">
+    <ParamField path="layerIds" type="ArrayLike<number>" required>
+      Array of layer IDs to pack
+    </ParamField>
+    <ParamField path="maxWidth" type="number" required>
+      Maximum atlas width in pixels
+    </ParamField>
+    <ParamField path="padding" type="number" default="0">
+      Padding between sprites in pixels
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="json" type="string">
+  JSON string with sprite positions and atlas dimensions
+</ResponseField>
+
+```javascript
+const metadata = comp.packSpritesJson(layerIds, 512, 2);
+const data = JSON.parse(metadata);
+// data = {
+//   sprites: [
+//     { index: 0, x: 0, y: 0, w: 64, h: 64 },
+//     { index: 1, x: 66, y: 0, w: 32, h: 32 },
+//     ...
+//   ],
+//   width: 512,
+//   height: 256
+// }
+```
+
+## Contact Sheets
+
+### contactSheet()
+
+Render a contact sheet grid from layers.
+
+<ParamField path="layerIds" type="ArrayLike<number>" required>
+  Array of layer IDs
+</ParamField>
+
+<ParamField path="columns" type="number" required>
+  Number of columns in the grid
+</ParamField>
+
+<ParamField path="padding" type="number" default="0">
+  Padding between cells in pixels
+</ParamField>
+
+<ParamField path="background" type="ByteInput" default="[0, 0, 0, 0]">
+  Background color as RGBA array
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="ContactSheetOptions">
+  <Expandable title="properties">
+    <ParamField path="layerIds" type="ArrayLike<number>" required>
+      Array of layer IDs
+    </ParamField>
+    <ParamField path="columns" type="number" required>
+      Number of columns in the grid
+    </ParamField>
+    <ParamField path="padding" type="number" default="0">
+      Padding between cells in pixels
+    </ParamField>
+    <ParamField path="background" type="ByteInput" default="[0, 0, 0, 0]">
+      Background color as RGBA array
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="rgba" type="Uint8Array">
+  Raw RGBA pixel data of the contact sheet
+</ResponseField>
+
+```javascript
+const frameIds = [1, 2, 3, 4, 5, 6];
+const sheet = comp.contactSheet(frameIds, 3, 4, [255, 255, 255, 255]);
+// or
+const sheet = comp.contactSheet({
+  layerIds: frameIds,
+  columns: 3,
+  padding: 4,
+  background: [255, 255, 255, 255]
+});
+```
+
+Cell dimensions are automatically derived from the largest layer.
+
+## Pixel Art Utilities
+
+### pixelScaleLayer()
+
+Scale a layer by an integer factor using nearest-neighbor interpolation (ideal for pixel art).
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="factor" type="number" required>
+  Integer scale factor (2x, 3x, etc.)
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="PixelScaleOptions">
+  <Expandable title="properties">
+    <ParamField path="factor" type="number" required>
+      Integer scale factor
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+comp.pixelScaleLayer(layerId, 4);
+// or
+comp.pixelScaleLayer(layerId, { factor: 4 });
+```
+
+## Color Quantization
+
+### extractPalette()
+
+Extract a color palette from a layer.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="maxColors" type="number" required>
+  Maximum number of colors to extract
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="PaletteOptions">
+  <Expandable title="properties">
+    <ParamField path="maxColors" type="number" required>
+      Maximum number of colors to extract
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="palette" type="Uint8Array">
+  Flat RGBA palette data [r, g, b, a, r, g, b, a, ...]
+</ResponseField>
+
+```javascript
+const palette = comp.extractPalette(layerId, 16);
+// or
+const palette = comp.extractPalette(layerId, { maxColors: 16 });
+```
+
+### quantizeLayer()
+
+Quantize a layer to a specific color palette.
+
+<ParamField path="id" type="number" required>
+  Layer ID
+</ParamField>
+
+<ParamField path="palette" type="ByteInput" required>
+  Flat RGBA palette data [r, g, b, a, r, g, b, a, ...]
+</ParamField>
+
+Alternatively, pass an options object:
+
+<ParamField path="options" type="QuantizeOptions">
+  <Expandable title="properties">
+    <ParamField path="palette" type="ByteInput" required>
+      Flat RGBA palette data
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```javascript
+// Extract palette from one layer
+const palette = comp.extractPalette(sourceId, 16);
+
+// Apply it to another layer
+comp.quantizeLayer(targetId, palette);
+// or
+comp.quantizeLayer(targetId, { palette });
+```
