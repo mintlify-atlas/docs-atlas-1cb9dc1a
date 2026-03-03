@@ -385,3 +385,70 @@ const greenChannel = hist.slice(256, 512);
 const blueChannel = hist.slice(512, 768);
 const alphaChannel = hist.slice(768, 1024);
 ```
+
+## Image Format Utilities
+
+### decodeImage()
+
+Auto-detect and decode an image from bytes to raw RGBA pixel data.
+
+<ParamField path="data" type="ByteInput" required>
+  Image file bytes (supports PNG, JPEG, WebP, GIF)
+</ParamField>
+
+<ResponseField name="rgba" type="Promise<Uint8Array>">
+  Decoded RGBA pixel data (without width/height metadata)
+</ResponseField>
+
+```javascript
+import { decodeImage } from '@iamkaf/kimg';
+
+const rgba = await decodeImage(imageBytes);
+```
+
+<Note>
+The returned RGBA data does not include width/height information. Use `detectFormat()` first if you need dimensions, or use the composition's `importImage()` method instead.
+</Note>
+
+### detectFormat()
+
+Detect the image format from magic bytes.
+
+<ParamField path="data" type="ByteInput" required>
+  Image file bytes
+</ParamField>
+
+<ResponseField name="format" type="Promise<string>">
+  Detected format: "png", "jpeg", "webp", "gif", "psd", or "unknown"
+</ResponseField>
+
+```javascript
+import { detectFormat } from '@iamkaf/kimg';
+
+const format = await detectFormat(imageBytes);
+// "png", "jpeg", "webp", "gif", "psd", or "unknown"
+```
+
+## WASM Runtime Utilities
+
+### simdSupported()
+
+Check if the current environment supports WebAssembly SIMD (simd128).
+
+<ResponseField name="supported" type="boolean">
+  True if SIMD is supported and available
+</ResponseField>
+
+```javascript
+import { simdSupported } from '@iamkaf/kimg';
+
+if (simdSupported()) {
+  console.log('SIMD-optimized WASM will be used');
+} else {
+  console.log('Baseline WASM will be used');
+}
+```
+
+<Note>
+kimg automatically loads the appropriate WASM binary (baseline or SIMD) based on runtime support. This function is primarily useful for diagnostics and performance reporting.
+</Note>
