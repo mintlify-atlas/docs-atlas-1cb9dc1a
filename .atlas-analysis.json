@@ -1,0 +1,101 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "kimg",
+  "projectDescription": "A Rust+WASM image compositing engine with layers, blend modes, filters, masks, and multi-format I/O",
+  "theme": "palm",
+  "primaryColor": "#7C3AED",
+  "lightColor": "#A78BFA",
+  "darkColor": "#5B21B6",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Core Concepts",
+        "pages": [
+          "concepts/layers",
+          "concepts/blend-modes",
+          "concepts/transforms",
+          "concepts/filters",
+          "concepts/masks"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api/composition",
+          "api/layers",
+          "api/filters",
+          "api/transforms",
+          "api/shapes",
+          "api/sprites",
+          "api/color-utilities"
+        ]
+      },
+      {
+        "group": "Advanced",
+        "pages": [
+          "advanced/building-from-source",
+          "advanced/performance",
+          "advanced/benchmarks",
+          "advanced/wasm-binary-size"
+        ]
+      },
+      {
+        "group": "Contributing",
+        "pages": [
+          "contributing"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Layer-based compositing with 16 blend modes",
+    "Non-destructive transforms (position, rotation, scale, flip)",
+    "Comprehensive filter system (HSL, blur, sharpen, levels, gradient map)",
+    "Shape layers with fill and stroke styling",
+    "Layer masks and clipping masks",
+    "Sprite sheet packing and pixel-art tools",
+    "Multi-format I/O (PNG, JPEG, WebP, GIF, PSD)",
+    "Bucket fill tool with contiguous/non-contiguous modes",
+    "Full document serialization",
+    "Pure WASM - no Canvas API or DOM dependencies"
+  ],
+  "publicApiSurface": [
+    "Composition.create()",
+    "doc.addImageLayer()",
+    "doc.addShapeLayer()",
+    "doc.addPaintLayer()",
+    "doc.addFilterLayer()",
+    "doc.addGroupLayer()",
+    "doc.addSolidColorLayer()",
+    "doc.addGradientLayer()",
+    "doc.updateLayer()",
+    "doc.deleteLayer()",
+    "doc.reorderLayers()",
+    "doc.duplicateLayer()",
+    "doc.applyFilter()",
+    "doc.bucketFillLayer()",
+    "doc.setLayerMask()",
+    "doc.setLayerClipToBelow()",
+    "doc.exportPng()",
+    "doc.exportJpeg()",
+    "doc.exportWebp()",
+    "doc.serialize()",
+    "Composition.deserialize()",
+    "hexToRgb()",
+    "rgbToHex()",
+    "relativeLuminance()",
+    "contrastRatio()",
+    "dominantRgbFromRgba()",
+    "readableTextColor()",
+    "rgbaToBase64()",
+    "base64ToRgba()"
+  ]
+}
